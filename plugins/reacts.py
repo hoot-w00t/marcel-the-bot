@@ -1,4 +1,4 @@
-import random
+import random, discord
 
 class MarcelPlugin:
 
@@ -6,7 +6,7 @@ class MarcelPlugin:
     plugin_description = "Random reactions from the bot."
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """    **The following command can only be run by an administrator.**
-    `reactions` [true, false] enables/disables reacting to messages.
+    `reactions` [on, off] enables/disables reacting to messages.
     """
     bot_commands = [
         "reactions",
@@ -15,7 +15,7 @@ class MarcelPlugin:
     def __init__(self, marcel):
         self.marcel = marcel
         if not self.marcel.register_event(self, "on_message", "on_message_react"):
-            print("Reactions plugin: Could not register the 'on_message' event.")
+            self.marcel.print_log("[Reactions] Could not register the 'on_message' event.")
         
         self.unicode_emojis = {
             "a": '\U0001F1E6',
@@ -46,7 +46,7 @@ class MarcelPlugin:
             "z": '\U0001F1FF',
         }
 
-        if self.marcel.verbose : print("Reactions plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Reactions] Plugin loaded.")
 
     def getUnicodeEmoji(self, character):
         if character in self.unicode_emojis:
@@ -55,44 +55,57 @@ class MarcelPlugin:
             return False
 
     async def on_message_react(self, message):
-        if not message.channel.is_private:
-            if self.marcel.get_setting(message.server, 'reactions_enabled', True):
-                random_react = self.marcel.get_setting(message.server, 'reactions_random', 20)
-                random_roll = random.randint(0, 100)
-                if random_roll <= random_react:
-                    self.marcel.set_setting(message.server, 'reactions_random', random.randint(1, random_roll + 5))
-                    for word in reversed(message.content.lower().split(' ')):
-                        is_double = False
-                        is_missing_emoji = False
+        if isinstance(message.channel, discord.abc.GuildChannel):
+            if self.marcel.get_setting(message.guild, 'reactions_enabled', True):
+                wordlist = message.content.lower().split(' ')
+                if 'woah' in wordlist:
+                    await message.add_reaction('\U0001F170')
+                    await message.add_reaction(self.getUnicodeEmoji("m"))
+                    await message.add_reaction(self.getUnicodeEmoji("a"))
+                    await message.add_reaction(self.getUnicodeEmoji("z"))
+                    await message.add_reaction(self.getUnicodeEmoji("i"))
+                    await message.add_reaction(self.getUnicodeEmoji("n"))
+                    await message.add_reaction(self.getUnicodeEmoji("g"))
 
-                        for letter in word:
-                            emoji = self.getUnicodeEmoji(letter)
-                            if emoji == None : is_missing_emoji = True
-                            if word.count(letter) > 1 : is_double = True
+                else:
+                    random_react = self.marcel.get_setting(message.guild, 'reactions_random', 10)
+                    random_roll = random.randint(0, 1000)
+                    if random_roll <= random_react:
+                        self.marcel.set_setting(message.guild, 'reactions_random', random.randint(1, random_roll + 2))
+                        for word in reversed(wordlist):
+                            is_double = False
+                            is_missing_emoji = False
 
-                        if not (is_double or is_missing_emoji):
                             for letter in word:
                                 emoji = self.getUnicodeEmoji(letter)
-                                if not emoji == None:
-                                    await self.marcel.bot.add_reaction(message, emoji)
+                                if emoji == None : is_missing_emoji = True
+                                if word.count(letter) > 1 : is_double = True
 
-                            break
+                            if not (is_double or is_missing_emoji):
+                                for letter in word:
+                                    emoji = self.getUnicodeEmoji(letter)
+                                    if not emoji == None:
+                                        await message.add_reaction(emoji)
+
+                                break
 
     async def reactions(self, message, args):
         if self.marcel.is_admin(message):
             if args:
                 new_value = args[0].lower()
-                if new_value == 'true':
-                    self.marcel.set_setting(message.server, 'reactions_enabled', True)
+                if new_value == 'on':
+                    self.marcel.set_setting(message.guild, 'reactions_enabled', True)
+                elif new_value == 'off':
+                    self.marcel.set_setting(message.guild, 'reactions_enabled', False)
                 else:
-                    self.marcel.set_setting(message.server, 'reactions_enabled', False)
+                    await message.channel.send("Unknown parameter.")
 
 
-            state = self.marcel.get_setting(message.server, 'reactions_enabled', True)
+            state = self.marcel.get_setting(message.guild, 'reactions_enabled', True)
             if state:
-                await self.marcel.bot.send_message(message.channel, "Reactions are enabled.")
+                await message.channel.send("Reactions are enabled.")
             else:
-                await self.marcel.bot.send_message(message.channel, "Reactions are disabled.")
+                await message.channel.send("Reactions are disabled.")
 
         else:
-            await self.marcel.bot.send_message(message.channel, "Only the server administrators have access to this command.")
+            await message.channel.send("Only the server administrators have access to this command.")

@@ -29,24 +29,24 @@ class MarcelPlugin:
         self.rps_win = ['I won!', 'You lost!']
         self.rps_lost = ['I lost.', 'You won!']
 
-        if self.marcel.verbose : print("Minigames plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Minigames] Plugin loaded.")
 
 
     async def coin(self, message, args):
         if random.randint(1, 20) > 10:
-            await self.marcel.bot.send_message(message.channel, "It's heads!")
+            await message.channel.send("It's heads!")
         else:
-            await self.marcel.bot.send_message(message.channel, "It's tails!")
+            await message.channel.send("It's tails!")
 
 
     def roll_dice(self):
         return random.randint(1, 6)
 
     async def dice(self, message, args):
-        await self.marcel.bot.send_message(message.channel, "You rolled " + str(self.roll_dice()) + "!")
+        await message.channel.send("You rolled " + str(self.roll_dice()) + "!")
 
     async def dices(self, message, args):
-        await self.marcel.bot.send_message(message.channel, "You rolled " + str(self.roll_dice()) + " and " + str(self.roll_dice()) + "!")
+        await message.channel.send("You rolled " + str(self.roll_dice()) + " and " + str(self.roll_dice()) + "!")
 
 
     def play_rps(self, play):
@@ -74,20 +74,21 @@ class MarcelPlugin:
         return response
 
     async def rock(self, message, args):
-        await self.marcel.bot.send_message(message.channel, self.play_rps(0))
+        await message.channel.send(self.play_rps(0))
 
     async def paper(self, message, args):
-        await self.marcel.bot.send_message(message.channel, self.play_rps(1))
+        await message.channel.send(self.play_rps(1))
 
     async def scissors(self, message, args):
-        await self.marcel.bot.send_message(message.channel, self.play_rps(2))
+        await message.channel.send(self.play_rps(2))
     
     async def bang(self, message, args):
         r = random.randint(0, 100)
         if r < 10:
-            await self.marcel.bot.send_message(message.channel, "**Bang!** " + message.author.mention + " was shot.")
+            await message.channel.send("**Bang!** " + message.author.mention + " was shot.")
         else:
-            await self.marcel.bot.add_reaction(message, '\U0001F91E')
+            if not self.marcel.get_setting(message.guild, 'command_cleanup', self.marcel.default_settings['command_cleanup']):
+                await message.add_reaction('\U0001F91E')
     
     async def thegame(self, message, args):
-        await self.marcel.bot.send_message(message.channel, "You lost it. And so have I.")
+        await message.channel.send("You lost it. And so have I.")

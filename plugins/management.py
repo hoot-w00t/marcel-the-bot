@@ -17,26 +17,23 @@ class MarcelPlugin:
 
     def __init__(self, marcel):
         self.marcel = marcel
-        if self.marcel.verbose : print("Management plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Management] Plugin loaded.")
 
     async def send_access_denied(self, channel):
-        await self.marcel.bot.send_message(channel, "Only the server administrators have access to this command.")
-
-    async def debug(self, message, args):
-        print(self.marcel.all_settings)
+        await channel.send("Only the server administrators have access to this command.")
 
     async def prefix(self, message, args):
         if self.marcel.is_admin(message):
             if args:
                 new_prefix = args[0]
                 if 4 > len(new_prefix) > 0:
-                    self.marcel.set_setting(message.server, 'prefix', new_prefix)
-                    await self.marcel.bot.send_message(message.channel, "The prefix is now : `" + new_prefix + "`")
+                    self.marcel.set_setting(message.guild, 'prefix', new_prefix)
+                    await message.channel.send("The prefix is now : `" + new_prefix + "`")
                 else:
-                    await self.marcel.bot.send_message(message.channel, "The prefix cannot exceed 3 characters.")
+                    await message.channel.send("The prefix cannot exceed 3 characters.")
 
             else:
-                await self.marcel.bot.send_message(message.channel, "You need to specify a new prefix.")
+                await message.channel.send("You need to specify a new prefix.")
 
         else:
             await self.send_access_denied(message.channel)
@@ -46,13 +43,13 @@ class MarcelPlugin:
             if args:
                 new_lang = args[0]
                 if new_lang in ['fr', 'en']:
-                    self.marcel.set_setting(message.server, 'lang', new_lang)
-                    await self.marcel.bot.send_message(message.channel, "The lang is now : `" + new_lang + "`")
+                    self.marcel.set_setting(message.guild, 'lang', new_lang)
+                    await message.channel.send("The lang is now : `" + new_lang + "`")
                 else:
-                    await self.marcel.bot.send_message(message.channel, "Invalid lang.")
+                    await message.channel.send("Invalid lang.")
 
             else:
-                await self.marcel.bot.send_message(message.channel, "The lang is currently : `" + self.marcel.get_setting(message.server, 'lang', self.marcel.default_settings['lang']) + "`")
+                await message.channel.send("The lang is currently : `" + self.marcel.get_setting(message.guild, 'lang', self.marcel.default_settings['lang']) + "`")
 
         else:
             await self.send_access_denied(message.channel)
@@ -62,14 +59,14 @@ class MarcelPlugin:
             if args:
                 new_value = args[0].lower()
                 if new_value == 'true':
-                    self.marcel.set_setting(message.server, 'command_cleanup', True)
+                    self.marcel.set_setting(message.guild, 'command_cleanup', True)
                 else:
-                    self.marcel.set_setting(message.server, 'command_cleanup', False)
+                    self.marcel.set_setting(message.guild, 'command_cleanup', False)
                 
-                await self.marcel.bot.send_message(message.channel, "Command cleanup is now : `" + str(self.marcel.get_setting(message.server, 'command_cleanup', self.marcel.default_settings['command_cleanup'])) + "`")
+                await message.channel.send("Command cleanup is now : `" + str(self.marcel.get_setting(message.guild, 'command_cleanup', self.marcel.default_settings['command_cleanup'])) + "`")
 
             else:
-                await self.marcel.bot.send_message(message.channel, "Command cleanup is currently : `" + str(self.marcel.get_setting(message.server, 'command_cleanup', self.marcel.default_settings['command_cleanup'])) + "`")
+                await message.channel.send("Command cleanup is currently : `" + str(self.marcel.get_setting(message.guild, 'command_cleanup', self.marcel.default_settings['command_cleanup'])) + "`")
 
         else:
             await self.send_access_denied(message.channel)

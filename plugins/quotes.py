@@ -1,4 +1,4 @@
-import random
+import random, os
 
 class MarcelPlugin:
 
@@ -16,6 +16,8 @@ class MarcelPlugin:
     def __init__(self, marcel):
         self.marcel = marcel
 
+        self.quotes_folder = os.path.join(self.marcel.resources_folder, 'quotes')
+        
         self.tek_quotes = [
             "It's dangerous to go alone! Take this. :coffee:",
             "Sleep? Where we're going, we don't need sleep.",
@@ -33,13 +35,13 @@ class MarcelPlugin:
         ]
 
 
-        if self.marcel.verbose : print("Quotes plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Quotes] Plugin loaded.")
     
     def get_random(self, min, max):
         return random.randint(min, max)
 
     async def tek(self, message, args):
-        await self.marcel.bot.send_message(message.channel, '_"' + self.tek_quotes[self.get_random(0, len(self.tek_quotes) - 1)] + '"_')
+        await message.channel.send('_"' + self.tek_quotes[self.get_random(0, len(self.tek_quotes) - 1)] + '"_')
     
     async def lonely(self, message, args):
-        await self.marcel.bot.send_message(message.channel, '_"' + self.lonely_quotes[self.get_random(0, len(self.lonely_quotes) - 1)] + '"_')
+        await message.channel.send('_"' + self.lonely_quotes[self.get_random(0, len(self.lonely_quotes) - 1)] + '"_')

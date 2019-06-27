@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, discord
 
 class MarcelPlugin:
 
@@ -13,44 +13,49 @@ class MarcelPlugin:
 
         self.messages = [
             {
-                "text": "back from the dead.",
-                "url": None,
-                "type": 0,
-                "duration": 20
+                "text": "Science is Fun.",
+                "type": discord.ActivityType.listening,
+                "duration": 10,
             },
             {
-                "text": "version 0.1.0",
-                "url": None,
-                "type": 0,
-                "duration": 30
+                "text": "version 1.0.0",
+                "type": discord.ActivityType.playing,
+                "duration": 20,
             },
             {
-                "text": "Now with plugins!",
-                "url": None,
-                "type": 0,
-                "duration": 15,
+                "text": "type !!help",
+                "type": discord.ActivityType.playing,
+                "duration": 50,
             },
             {
-                "text": "still a beta.",
-                "url": None,
-                "type": 0,
+                "text": "no longer in beta!",
+                "type": discord.ActivityType.playing,
                 "duration": 30,
             },
             {
                 "text": "your commands.",
-                "url": None,
-                "type": 2,
+                "type": discord.ActivityType.listening,
                 "duration": 20,
             },
+            {
+                "text": "Fortnite",
+                "type": discord.ActivityType.playing,
+                "duration": 80,
+            },
+            {
+                "text": "the sunrise.",
+                "type": discord.ActivityType.watching,
+                "duration": 10,
+            }
         ]
 
         self.marcel.bot.loop.create_task(self.presence_background())
-        if self.marcel.verbose : print("Rich Presence plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Rich Presence] Plugin loaded.")
 
     async def presence_background(self):
         await self.marcel.bot.wait_until_ready()
-        self.messages.append({"text": "with " + str(len(self.marcel.plugins)) + " plugins.", "url": None, "type": 0, "duration": 20 })
-        while not self.marcel.bot.is_closed:
+        self.messages.append({ "text": "with " + str(len(self.marcel.plugins)) + " plugins.", "type": 0, "duration": 20 })
+        while not self.marcel.bot.is_closed():
             for message in self.messages:
-                await self.marcel.change_presence(message['text'], url=message['url'], ptype=message['type'])
+                await self.marcel.bot.change_presence(status=discord.Status.online, activity=discord.Activity(name=message['text'], type=message['type']))
                 await asyncio.sleep(message['duration'])

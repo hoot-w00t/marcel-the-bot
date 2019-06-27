@@ -13,13 +13,13 @@ class MarcelPlugin:
 
     def __init__(self, marcel):
         self.marcel = marcel
-        if self.marcel.verbose : print("Basic commands plugin loaded.")
+        if self.marcel.verbose : self.marcel.print_log("[Basic commands] Plugin loaded.")
 
     async def ping(self, message, args):
-        await self.marcel.bot.send_message(message.channel, "Pong! " + message.author.mention)
+        await message.channel.send("Pong! " + message.author.mention)
     
     async def help(self, message, args):
-        prefix = self.marcel.get_setting(message.server, 'prefix', self.marcel.default_settings['prefix'])
+        prefix = self.marcel.get_setting(message.guild, 'prefix', self.marcel.default_settings['prefix'])
         if len(args) > 0:
             if args[0] == "all":
                 helps = []
@@ -30,22 +30,22 @@ class MarcelPlugin:
                 help_message = message.author.mention + " here's the help for all the plugins.\n" + '\n'.join(helps).strip()
                 
                 if len(help_message) > 2000:
-                    await self.marcel.bot.send_message(message.channel, "Unable to display the helps from all plugins at once, it exceeds Discord's 2000 character limit. Use `" + prefix + "help [plugin]` instead.")
+                    await message.channel.send("Unable to display the helps from all plugins at once, it exceeds Discord's 2000 character limit. Use `" + prefix + "help [plugin]` instead.")
                 
                 else:
-                    await self.marcel.bot.send_message(message.channel, help_message)
+                    await message.channel.send(help_message)
 
             else:
                 request = ' '.join(args)
                 found_help = False
                 for plugin in self.marcel.plugins:
                     if plugin.lower().startswith(request.lower()):
-                        await self.marcel.bot.send_message(message.channel, message.author.mention + " here's the help for **" + plugin + "**:\n" + self.marcel.plugins[plugin].plugin_help)
+                        await message.channel.send(message.author.mention + " here's the help for **" + plugin + "**:\n" + self.marcel.plugins[plugin].plugin_help)
                         found_help = True
                         break
                 
                 if not found_help:
-                    await self.marcel.bot.send_message(message.channel, "No help found for `" + request + "`. You can get a list of the plugins with `" + prefix + "help`.")
+                    await message.channel.send("No help found for `" + request + "`. You can get a list of the plugins with `" + prefix + "help`.")
 
         else:
             plugin_list = []
@@ -53,5 +53,5 @@ class MarcelPlugin:
             for plugin in self.marcel.plugins:
                 plugin_list.append(plugin)
             
-            await self.marcel.bot.send_message(message.channel, "Use `" + prefix + "help [plugin]` to show a specific help, or `" + prefix + "help all` to get everything.\nYou don't have to write the plugin's full name, for instance `" + prefix + "help basic` would autocomplete to the `Basic commands` plugin.\nHere's a list of the plugins:\n```\n" + '\n'.join(plugin_list) + '```')
+            await message.channel.send("Use `" + prefix + "help [plugin]` to show a specific help, or `" + prefix + "help all` to get everything.\nYou don't have to write the plugin's full name, for instance `" + prefix + "help basic` would autocomplete to the `Basic commands` plugin.\nHere's a list of the plugins:\n```\n" + '\n'.join(plugin_list) + '```')
             
