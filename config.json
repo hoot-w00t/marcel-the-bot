@@ -1,5 +1,11 @@
 {
-    "bot_token": "",
-    "bot_folder": ".",
-    "logging": true
+    "token": "",
+    "folder": ".",
+
+    "default_server_settings": {
+        "prefix": "!!",
+        "lang": "fr",
+        "command_cleanup": false,
+        "maximum_volume": 1.0
+    }
 }
