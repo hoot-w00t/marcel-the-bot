@@ -1,11 +1,13 @@
-from discord import Activity, ActivityType, Status
-from asyncio import sleep
+from marcel import Marcel, __version__
+import discord
+import asyncio
+import json
+import logging
 
 class MarcelPlugin:
-
     """
         Rich Presence plugin for Marcel the Discord Bot
-        Copyright (C) 2019  akrocynova
+        Copyright (C) 2019-2020  akrocynova
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -19,64 +21,90 @@ class MarcelPlugin:
 
         You should have received a copy of the GNU General Public License
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
     """
 
     plugin_name = "Rich Presence"
-    plugin_description = "Adds custom Rich Presence to the bot."
+    plugin_description = "Adds custom Rich Presence to the bot"
     plugin_author = "https://github.com/hoot-w00t"
-    plugin_help = "    This plugin has no commands, its purpose is to update the Rich Presence status.\n"
+    plugin_help = ""
+
     bot_commands = []
 
-    def __init__(self, marcel):
+    activity_types = {
+        "listening": discord.ActivityType.listening,
+        "watching": discord.ActivityType.watching,
+        "playing": discord.ActivityType.playing
+    }
+
+    status_types = {
+        "online": discord.Status.online,
+        "offline": discord.Status.invisible,
+        "invisible": discord.Status.invisible,
+        "do_not_disturb": discord.Status.dnd,
+        "dnd": discord.Status.dnd,
+        "idle": discord.Status.idle
+    }
+
+    def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
-        self.messages = [
-            {
-                "text": "Science is Fun.",
-                "type": ActivityType.listening,
-                "duration": 15,
-            },
-            {
-                "text": "version 2.0",
-                "type": ActivityType.playing,
-                "duration": 20,
-            },
-            {
-                "text": "!!help",
-                "type": ActivityType.playing,
-                "duration": 50,
-            },
-            {
-                "text": "github.com/hoot-w00t",
-                "type": ActivityType.playing,
-                "duration": 20,
-            },
-            {
-                "text": "your commands.",
-                "type": ActivityType.listening,
-                "duration": 20,
-            },
-            {
-                "text": "Minecraft",
-                "type": ActivityType.playing,
-                "duration": 20,
-            },
-            {
-                "text": "the sunrise.",
-                "type": ActivityType.watching,
-                "duration": 15,
-            }
-        ]
+        messages_file = self.marcel.cfg_path.joinpath("rich_presence.json")
+        if messages_file.exists():
+            with messages_file.open("r") as h:
+                self.messages = json.load(h)
+        else:
+            self.messages = list()
 
+        for message in self.messages:
+            message["text"] = message.get("text", "").format(
+                version=__version__
+            )
+
+            message["duration"] = message.get("duration", 10)
+            if message["duration"] <= 0:
+                message["duration"] = 10
+
+            message["type"] = self.activity_types.get(
+                message.get("type"),
+                discord.ActivityType.playing
+            )
+            message["status"] = self.status_types.get(message.get("status"))
+
+        self.stop = False
         self.marcel.bot.loop.create_task(self.presence_background())
-        if self.marcel.verbose : self.marcel.print_log(f"[{self.plugin_name}] Plugin loaded.")
+
+    def unload(self):
+        """Stop background task when unloading plugin"""
+
+        self.stop = True
+
+    def stop_background_task(self):
+        return self.stop or self.marcel.bot.is_closed() or len(self.messages) == 0
 
     async def presence_background(self):
-        await self.marcel.bot.wait_until_ready()
-        self.messages.append({ "text": f"with {len(self.marcel.plugins)} plugins.", "type": 0, "duration": 20 })
+        try:
+            if not self.marcel.bot.is_ready():
+                logging.debug("Rich Presence: Waiting to be ready...")
+                await self.marcel.bot.wait_until_ready()
 
-        while not self.marcel.bot.is_closed():
-            for message in self.messages:
-                await self.marcel.bot.change_presence(status=Status.online, activity=Activity(name=message['text'], type=message['type']))
-                await sleep(message['duration'])
+            logging.debug("Rich Presence: Starting")
+            while not self.stop_background_task():
+                for message in self.messages:
+                    await self.marcel.bot.change_presence(
+                        status=message.get("status"),
+                        activity=discord.Activity(
+                            name=message.get("text"),
+                            type=message.get("type")
+                        )
+                    )
+
+                    for i in range(0, message["duration"]):
+                        if self.stop_background_task():
+                            raise Exception("Force stopped")
+
+                        await asyncio.sleep(1)
+
+        except Exception as e:
+            logging.error("Rich Presence: {}".format(e))
+
+        logging.error("Rich Presence background task exitted")
