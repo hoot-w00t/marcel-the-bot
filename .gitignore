@@ -1,0 +1,7 @@
+__pycache__/
+sample_config/
+.vscode/
+marcel_the_bot.egg-info/
+build/
+dist/
+update_pypi.sh
