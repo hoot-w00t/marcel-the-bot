@@ -148,3 +148,7 @@ The Rich Presence plugin reads its configuration from `rich_presence.json` at th
 -   `type` is the activity type (`playing`, `watching`, `listening`), it it `playing` by default
 -   `status` is the bot's online status (`online`, `offline`, `invisible`, `do_not_disturb`, `dnd`, `idle`), it is `online` by default
 -   `duration` is the duration of this status message (in seconds)
+
+### SoundBox
+The SoundBox plugin will read media files from a `soundbox` folder at the root of the configuration folder.
+It currently accepts the following formats: `mp3`, `ogg`, `webm` and `wav`, any of those file types in the `soundbox` folder can then be played.
