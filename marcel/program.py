@@ -2,6 +2,7 @@ from typing import Union
 from pathlib import Path
 import marcel
 import json
+import sys
 
 """
     Marcel the Discord Bot
@@ -41,21 +42,33 @@ sample_config = {
     }
 }
 
-def initialize_cfg(path: Union[str, Path]):
+def initialize_cfg(path: Union[str, Path]) -> int:
+    """Initialize configuration file"""
+
     if isinstance(path, str):
         path = Path(path).expanduser().resolve()
 
-    if path.exists():
-        raise FileExistsError(str(path))
-
-    path.mkdir()
+    if not path.exists():
+        path.mkdir()
 
     cfg_file = path.joinpath("config.json")
-    with cfg_file.open("w") as h:
-        json.dump(sample_config, h, indent=4)
+    if cfg_file.exists():
+        if not input("{}: already exists, overwrite? [y/N] ".format(
+            str(cfg_file))
+            ).strip().lower() in ["y", "yes"]:
+            return 1
 
-    print("Default configuration initialized in: {}".format(path))
-    print("Do not forget to put your bot token in the 'config.json' file")
+    with cfg_file.open("w") as h:
+        cfg = sample_config.copy()
+
+        token = input("Discord Bot Token: ").strip()
+        if len(token) > 0:
+            cfg["token"] = token
+
+        json.dump(cfg, h, indent=4)
+
+    print("Configuration initialized in: {}".format(path))
+    return 0
 
 def main():
     from argparse import ArgumentParser
@@ -85,12 +98,12 @@ def main():
     args = arg_parser.parse_args()
 
     if args.initialize:
-        initialize_cfg(args.initialize)
-        return 0
+        return initialize_cfg(args.initialize)
 
     marcel_the_bot = marcel.Marcel(
         args.cfg_path,
         args.plugins_path
     )
     marcel_the_bot.run()
+
     return 0
