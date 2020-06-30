@@ -119,5 +119,32 @@ class MarcelPlugin:
             )
         )
 ```
-
 [discord.py documentation](https://discordpy.readthedocs.io/en/latest/)
+
+## Plugin configuration
+### Rich Presence
+The Rich Presence plugin reads its configuration from `rich_presence.json` at the root of your bot's configuration folder:
+```json
+[
+    {
+        "text": "Science is Fun",
+        "type": "listening",
+        "status": "dnd",
+        "duration": 15
+    },
+    {
+        "text": "version {version}",
+        "status": "idle",
+        "duration": 30
+    },
+    {
+        "text": "the sunrise.",
+        "type": "watching",
+        "duration": 15
+    }
+]
+```
+-   `text` is the text to be displayed
+-   `type` is the activity type (`playing`, `watching`, `listening`), it it `playing` by default
+-   `status` is the bot's online status (`online`, `offline`, `invisible`, `do_not_disturb`, `dnd`, `idle`), it is `online` by default
+-   `duration` is the duration of this status message (in seconds)
