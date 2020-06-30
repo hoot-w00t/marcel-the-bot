@@ -5,20 +5,20 @@ if [ $(id -u) -ne 0 ]
   exit
 fi
 
+INSTALL_DIR="/opt/marcel-the-bot"
+
 echo "Deleting service..."
 
 systemctl stop marcel-the-bot.service
 systemctl disable marcel-the-bot.service
 
-rm /usr/lib/systemd/system/marcel-the-bot.service
+rm -f /usr/lib/systemd/system/marcel-the-bot.service
 
 systemctl daemon-reload
 
 echo "Uninstalling Marcel the Bot..."
 
-rm -r /opt/marcel-the-bot/
-rmdir -f /opt/marcel-the-bot/
-
+rm -rf "$INSTALL_DIR"
 deluser --system --remove-home marcel
 
 echo "Finished uninstalling!"

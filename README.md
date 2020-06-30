@@ -1,74 +1,123 @@
 # Marcel the Bot
 ## What is it?
-Marcel is a  plugin-based Discord bot. It uses [discord.py](https://github.com/Rapptz/discord.py/).
-It comes with a good set a plugins for many uses, but you can add/remove them if you want. You can also make your own plugin, see [Make your own plugin](#make-your-own-plugin)
+Marcel is a  plugin-based Discord bot. It uses [discord.py](https://github.com/Rapptz/discord.py/) to interact with Discord.
+
+It comes with a good set a plugins for many uses, but you can add/remove any plugin if you want.
+
+You can also make your own plugin, see [Make your own plugin](#make-your-own-plugin)
 
 ## Installation
-This program requires [Python 3.6+](https://docs.python.org/3.6/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dl](https://github.com/ytdl-org/youtube-dl/) for the mediaplayer.
+This program requires [Python 3.3+](https://docs.python.org/3.3/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dl](https://github.com/ytdl-org/youtube-dl/) for the media player.
 
 Follow [these instructions](https://github.com/Rapptz/discord.py/#installing) to install [discord.py](https://github.com/Rapptz/discord.py/).
-Voice functionnality requires `ffmpeg` to be installed.
 
-You can also run the installation script (made for Linux) to automatically install the files and create a service.
-```bash
-sudo ./install.sh
+Voice functionnality requires `ffmpeg` or `avconv` to be installed.
+
+You can install the bot through PyPI
+```sh
+python3 -m pip install --user --upgrade marcel-the-bot
+```
+or using the `setup.py`
+```sh
+python3 setup.py install
 ```
 
-You can manage the service using `sudo systemctl start/stop/restart marcel-the-bot.service`.
-If you want to uninstall it you can simply run `sudo ./uninstall.sh`.
+You can automatically install/uninstall the bot as a SystemD service on Linux using the given script
+```sh
+sudo ./install_linux_daemon.sh
+#sudo ./uninstall_linux_daemon.sh
+```
+You can also run the bot manually with `python3 -m marcel -c config_folder -p plugins_folder`.
 
-You can also run it as is with `./marcel.py --config config.json`.
-
-**Note:** [youtube_dl](https://github.com/ytdl-org/youtube-dl/) gets updated often, you will regularly need to update it in order for the related voice functionnalities to keep working: `python3 -m pip install -U youtube-dl`.
-**Note:** Don't forget to edit the configuration with your token!
+**Note:** [youtube_dl](https://github.com/ytdl-org/youtube-dl/) gets updated often, you will regularly need to update it in order for the related voice functionnalities to keep working: `python3 -m pip install --user --upgrade youtube-dl` or `su -c "python3 -m pip install --user --upgrade youtube-dl" marcel` if you installed the Linux service.
 
 ## Configuration
-The configuration file `config.json` contains the following entries:
+Here's a configuration template (which you can find in the `templates` folder):
 ```json
 {
-    "token": "your_token_goes_here",
-    "folder": ".",
-
-    "default_server_settings": {
+    "token": "your_bot_token_goes_here",
+    "owners": [],
+    "logging": {
+        "level": "warning"
+    },
+    "voice_client": {
+        "timeout_idle": 1800,
+        "timeout_playing": 7200,
+        "player_queue_limit": 20,
+        "duration_limit": 1800
+    },
+    "server_defaults": {
         "prefix": "!!",
-        "lang": "fr",
-        "command_cleanup": false,
-        "maximum_volume": 1.0
+        "ack_commands": false,
+        "volume": 1.0,
+        "volume_limit": 1.25
     }
 }
 ```
--   `token` is your bot's token ([https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token)).
--   `folder` is the bot's folder containing the `resources`, `settings`, `logs`, `temp` and `plugins` folders. The `.` represents the working directory.
--   `default_server_settings` are the bot's default settings for new servers.
+-   `token` is your bot's token ([https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token))
+-   `owners` is a list of user IDs that are bot owners, these users will have all privileges over the bot
+-   `logging` defines how the bot should log information
+    -   `level` is the logging level, by default it is set to `warning`
+-   `voice_client` defines the voice client's behavior
+    -   `timeout_idle` is the idle time (in seconds) before the voice client is automatically disconnected
+    -   `timeout_playing` is the idle time while a media is playing (in seconds) before the voice client is automatically disconnected
+    -   `player_queue_limit` is the maximum amount of medias that the player queue will accept
+    -   `duration_limit` is the maximum duration of a media (in seconds)
+-   `server_defaults` are the default settings for the Discord servers (each plugin can store its own settings too)
+    -   `prefix` is the bot's prefix (by default `!!`)
+    -   `ack_commands` will add reactions to the processed commands
+    -   `volume` is the player's volume
+    -   `volume_limit` is the player's maximum volume
+
+The server settings can be changed from Discord using the commands in the `settings.py` plugin.
 
 ## Make your own plugin
-The bot will load all the files with a `.py` extension inside the `plugins` folder.
+The bot will load all the files with a `.py` extension in its plugins folder (can be set using `-p` or `--plugins`)
 
-Here's a template (you can find this template under the name `plugin.template`):
+Here's a plugin template (which you can find in the `templates` folder):
 ```python
-class MarcelPlugin:
+from marcel import Marcel
+from marcel.util import embed_message
+import discord
+import logging
 
-    plugin_name = "Template plugin"
-    plugin_description = "Template plugin for Marcel"
+class MarcelPlugin:
+    plugin_name = "Template"
+    plugin_description = "Template plugin"
     plugin_author = "https://github.com/hoot-w00t"
-    plugin_help = """    `ping` pongs! :clap:
-    """
+
+    # The help message will be formatted to be displayed when running
+    # the "help" command
+    plugin_help = """`{prefix}ping` pongs! :clap:"""
+
+    # List of tuples in the form (command, target function)
+    # Functions are given the following arguments:
+    # message: discord.Message()
+    # args:    list() of the interpreted command arguments
     bot_commands = [
-        "ping",
+        ("ping", "ping_cmd")
     ]
 
-    def __init__(self, marcel):
+    def __init__(self, marcel: Marcel):
+        # This is to give access to the bot at anytime, anywhere in the plugin
         self.marcel = marcel
-        if self.marcel.verbose : self.marcel.print_log(f"[{self.plugin_name}] Plugin loaded.")
 
-    async def ping(self, message, args):
-        await message.channel.send(f"Pong! {message.author.mention}")
+        # You can log anything using the logging module
+        logging.debug("Hello world!")
+
+    async def ping_cmd(self, message: discord.Message, args: list):
+        """Ping command"""
+
+        await message.channel.send(
+            message.author.mention,
+            embed=embed_message(
+                "Pong!",
+                discord.Color.orange(),
+                message="in {}ms".format(
+                    int(self.marcel.bot.latency * 1000)
+                )
+            )
+        )
 ```
 
-The variables at the top are used by the bot to display help and get information about the plugin.
-The `bot_commands` variable is a list of all the commands to register. Basically a command is bound to a function of the same name.
-For instance here we have the `ping` command which will be bound to the `ping()` function. They have to be named the same.
-In the `__init__` function, the variable `marcel` is a positional argument of the `Marcel()` class, which allows to use the bot's functions and the discord.py client referenced as `bot` (`self.marcel.bot`). You can [learn how to use discord.py here](https://discordpy.readthedocs.io/en/latest/).
-This is why we have the line `self.marcel = marcel`, it stores it permanently so that any functions can interact with it. You could change the name, it doesn't really matter.
-`if self.marcel.verbose : self.marcel.print_log(f"[{self.plugin_name}] Plugin loaded.")` uses the `Marcel()` class to output a message indicating that the initialization of the plugin is done and that it didn't encounter any errors.
-**Note**: I'll push documentation for the voice client and general functions you can use when I find the time to.
+[discord.py documentation](https://discordpy.readthedocs.io/en/latest/)

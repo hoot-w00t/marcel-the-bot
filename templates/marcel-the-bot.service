@@ -1,0 +1,18 @@
+[Unit]
+Description="Marcel the Discord Bot"
+Requires=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m marcel -c /opt/marcel-the-bot/cfg -p /opt/marcel-the-bot/plugins
+WorkingDirectory=/opt/marcel-the-bot
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+
+User=marcel
+Group=marcel
+
+[Install]
+WantedBy=multi-user.target
