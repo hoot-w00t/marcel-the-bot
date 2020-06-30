@@ -12,6 +12,7 @@ echo "Installing Marcel the Bot..."
 adduser --system --shell /bin/bash --group --disabled-password marcel
 
 su -c "/usr/bin/python3 -m pip install --user --upgrade -r requirements.txt" marcel
+su -c "/usr/bin/python3 -m pip install --user --upgrade -r plugins-requirements.txt" marcel
 su -c "/usr/bin/python3 -m pip install --user --upgrade marcel-the-bot" marcel
 
 mkdir -p "$INSTALL_DIR"
