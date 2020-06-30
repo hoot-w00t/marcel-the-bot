@@ -18,7 +18,7 @@ import discord
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-def embed_message(title: str, color: discord.Color, message: str = ""):
+def embed_message(title: str, color: discord.Color, message: str = "") -> discord.Embed:
     """Create a discord.Embed to display a simple message"""
 
     embed = discord.Embed(title=message, color=color)
