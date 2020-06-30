@@ -1,6 +1,6 @@
 from typing import Union
 from pathlib import Path
-import marcel
+from marcel import Marcel
 import json
 import sys
 
@@ -100,7 +100,7 @@ def main():
     if args.initialize:
         return initialize_cfg(args.initialize)
 
-    marcel_the_bot = marcel.Marcel(
+    marcel_the_bot = Marcel(
         args.cfg_path,
         args.plugins_path
     )
