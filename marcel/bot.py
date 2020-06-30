@@ -11,6 +11,7 @@ import logging
 import discord
 import types
 import time
+import datetime
 
 """
     Marcel the Discord Bot
@@ -30,7 +31,7 @@ import time
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-class Marcel:
+class Marcel(discord.Client):
     def __init__(self, cfg_path: Union[str, Path], plugins_path: Union[str, Path]):
         # Expand cfg_path (bot root folder)
         if isinstance(cfg_path, Path):
@@ -48,21 +49,9 @@ class Marcel:
         # Initializing variables
         self.plugins = dict()         # Loaded bot plugins
         self.commands = dict()        # Commands' function handlers
-        self.voice_clients = dict()   # Voice clients for each server
+        self.media_players = dict()   # Voice clients for each server
         self.event_handlers = dict()  # Bot events' function handlers
         self.owners = None            # Bot owners
-
-        self.bot = discord.Client()
-
-        self.bot.event(self.on_ready)
-        self.bot.event(self.on_disconnect)
-        self.bot.event(self.on_message)
-        self.bot.event(self.on_member_join)
-        self.bot.event(self.on_member_remove)
-        self.bot.event(self.on_guild_join)
-        self.bot.event(self.on_guild_remove)
-        self.bot.event(self.on_reaction_add)
-        self.bot.event(self.on_reaction_remove)
 
         # Setup logging
         log_level_cfg = self.cfg.get("logging", dict()).get("level", "warning")
@@ -89,6 +78,9 @@ class Marcel:
         # Load configuration settings
         self.load_server_settings()
 
+        # Initialize discord.Client
+        super(Marcel, self).__init__()
+
         # Expand plugins_path (bot plugins folder)
         if isinstance(plugins_path, Path):
             self.plugins_path = plugins_path
@@ -101,7 +93,9 @@ class Marcel:
     def run(self):
         """Run the bot (blocking)"""
 
-        self.bot.run(self.cfg.get("token"))
+        super(Marcel, self).run(
+            self.cfg.get("token")
+        )
         self.save_server_settings()
 
     def load_cfg(self):
@@ -121,7 +115,7 @@ class Marcel:
             self.owners.clear()
 
         for owner in self.cfg.get("owners", list()):
-            self.owners.append(self.bot.get_user(int(owner)))
+            self.owners.append(self.get_user(int(owner)))
 
     def load_plugin(self, filepath: Union[str, Path]):
         """Load plugin"""
@@ -360,11 +354,11 @@ class Marcel:
 
         guild_id = str(guild.id)
 
-        if not guild_id in self.voice_clients:
+        if not guild_id in self.media_players:
             logging.info("Creating Media Player for guild: {}".format(guild_id))
             guild_settings = self.get_server_settings(guild.id)
 
-            self.voice_clients[guild_id] = MarcelMediaPlayer(
+            self.media_players[guild_id] = MarcelMediaPlayer(
                 guild,
                 volume=guild_settings.get("volume", 1.0),
                 volume_limit=guild_settings.get("volume_limit", 1.0),
@@ -374,7 +368,7 @@ class Marcel:
                 timeout_playing=self.cfg.get("voice_client", dict()).get("timeout_playing", 7200)
             )
 
-        return self.voice_clients.get(guild_id)
+        return self.media_players.get(guild_id)
 
     def is_member_owner(self, member: discord.Member):
         """Return True if member is an owner"""
@@ -396,7 +390,7 @@ class Marcel:
     def is_me(self, member: discord.Member):
         """Return True if member is the bot user"""
 
-        return member == self.bot.user
+        return member == self.user
 
     async def on_message(self, message: discord.Message):
         if not (self.is_me(message.author) or not isinstance(message.channel, discord.abc.GuildChannel)):
@@ -444,25 +438,41 @@ class Marcel:
 
     async def on_ready(self):
         logging.warning("Logged in as: {} ({})".format(
-            self.bot.user.name,
-            self.bot.user.id
+            self.user.name,
+            self.user.id
         ))
 
         guilds_str = list()
-        for guild in self.bot.guilds:
+        for guild in self.guilds:
             guilds_str.append(guild.name)
 
         logging.warning("Bot is in {} servers: {}".format(
-            len(self.bot.guilds),
+            len(self.guilds),
             ", ".join(guilds_str)
         ))
 
         for func in self.get_event_handler_functions("on_ready"):
             await func()
 
+    async def on_connect(self):
+        for func in self.get_event_handler_functions("on_connect"):
+            await func()
+
     async def on_disconnect(self):
         for func in self.get_event_handler_functions("on_disconnect"):
             await func()
+
+    async def on_resumed(self):
+        for func in self.get_event_handler_functions("on_resumed"):
+            await func()
+
+    async def on_typing(self, channel: discord.abc.Messageable, user: Union[discord.User, discord.Member], when: datetime.datetime):
+        for func in self.get_event_handler_functions("on_typing"):
+            await func(channel, user, when)
+
+    async def on_message_delete(self, message: discord.Message):
+        for func in self.get_event_handler_functions("on_message_delete"):
+            await func(message)
 
     async def on_reaction_add(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]):
         for func in self.get_event_handler_functions("on_reaction_add"):

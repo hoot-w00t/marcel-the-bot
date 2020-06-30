@@ -45,7 +45,7 @@ class MarcelPlugin:
                 "Pong!",
                 discord.Color.orange(),
                 message="in {}ms".format(
-                    int(self.marcel.bot.latency * 1000)
+                    int(self.marcel.latency * 1000)
                 )
             )
         )

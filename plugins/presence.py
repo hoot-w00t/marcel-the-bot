@@ -71,7 +71,7 @@ class MarcelPlugin:
             message["status"] = self.status_types.get(message.get("status"))
 
         self.stop = False
-        self.marcel.bot.loop.create_task(self.presence_background())
+        self.marcel.loop.create_task(self.presence_background())
 
     def unload(self):
         """Stop background task when unloading plugin"""
@@ -79,18 +79,18 @@ class MarcelPlugin:
         self.stop = True
 
     def stop_background_task(self):
-        return self.stop or self.marcel.bot.is_closed() or len(self.messages) == 0
+        return self.stop or self.marcel.is_closed() or len(self.messages) == 0
 
     async def presence_background(self):
         try:
-            if not self.marcel.bot.is_ready():
+            if not self.marcel.is_ready():
                 logging.debug("Rich Presence: Waiting to be ready...")
-                await self.marcel.bot.wait_until_ready()
+                await self.marcel.wait_until_ready()
 
             logging.debug("Rich Presence: Starting")
             while not self.stop_background_task():
                 for message in self.messages:
-                    await self.marcel.bot.change_presence(
+                    await self.marcel.change_presence(
                         status=message.get("status"),
                         activity=discord.Activity(
                             name=message.get("text"),
