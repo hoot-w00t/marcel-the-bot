@@ -26,7 +26,7 @@ sample_config = {
     "token": "your_bot_token_goes_here",
     "owners": [],
     "logging": {
-        "level": "info"
+        "level": "warning"
     },
     "voice_client": {
         "timeout_idle": 1800,
