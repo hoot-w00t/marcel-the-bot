@@ -127,20 +127,32 @@ class MarcelMediaPlayer:
         })
 
         self.reset_timeout()
+        self.timeout_loop.start()
 
     @tasks.loop(seconds=15)
     async def timeout_loop(self):
-        current_time = time.time()
+        if self.is_in_voice_channel():
+            current_time = time.time()
 
-        if self.is_media_playing():
-            if current_time - self.last_action > self.timeout_playing:
-                logging.info("Playing Timeout reached for guild: {}".format(self.guild.id))
-                await self.leave_voice_channel(timed_out=True)
+            if self.is_media_playing():
+                if current_time - self.last_action > self.timeout_playing:
+                    logging.info("Playing Timeout reached for guild: {}".format(self.guild.id))
+                    await self.leave_voice_channel(timed_out=True)
 
-        else:
-            if current_time - self.last_action > self.timeout_idle:
-                logging.info("Idle Timeout reached for guild: {}".format(self.guild.id))
-                await self.leave_voice_channel(timed_out=True)
+            else:
+                if current_time - self.last_action > self.timeout_idle:
+                    logging.info("Idle Timeout reached for guild: {}".format(self.guild.id))
+                    await self.leave_voice_channel(timed_out=True)
+
+    def after_callback(self, error):
+        """Callback after a media has finished playing"""
+
+        logging.info("After callback for guild: {}".format(self.guild.id))
+        if error:
+            logging.error("Play callback error for guild: {}: {}".format(self.guild.id, error))
+
+        if self.autoplay:
+            self.voice_client.loop.create_task(self.skip(autoplay=True))
 
     def reset_timeout(self):
         self.last_action = time.time()
@@ -208,16 +220,6 @@ class MarcelMediaPlayer:
             logging.error("ytdl_fetch: {}".format(e))
             return PlayerInfo() if as_playerinfo else dict()
 
-    def after_callback(self, error):
-        """Callback after a media has finished playing"""
-
-        logging.info("After callback for guild: {}".format(self.guild.id))
-        if error:
-            logging.error("Play callback error for guild: {}: {}".format(self.guild.id, error))
-
-        if self.autoplay:
-            self.voice_client.loop.create_task(self.skip(autoplay=True))
-
     async def send_nothing_playing(self):
         """Send a nothing is playing message to the previous channel"""
 
@@ -241,9 +243,8 @@ class MarcelMediaPlayer:
                 )
 
             else:
-                await self.voice_client.move_to(voice_channel)
-
                 self.reset_timeout()
+                await self.voice_client.move_to(voice_channel)
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -255,10 +256,8 @@ class MarcelMediaPlayer:
 
         else:
             try:
-                self.voice_client = await voice_channel.connect(timeout=10, reconnect=False)
-
-                self.timeout_loop.start()
                 self.reset_timeout()
+                self.voice_client = await voice_channel.connect(timeout=10, reconnect=False)
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -268,7 +267,11 @@ class MarcelMediaPlayer:
                     )
                 )
 
-            except:
+            except Exception as e:
+                logging.error("Unable to join voice channel for guild: {}: {}".format(
+                    self.guild.id,
+                    e
+                ))
                 await self.previous_channel.send(
                     embed=embed_message(
                         "I cannot join voice channel",
@@ -314,7 +317,6 @@ class MarcelMediaPlayer:
                 name = self.voice_client.channel.name
 
                 await self.voice_client.disconnect()
-                self.timeout_loop.stop()
 
                 if not silent:
                     await self.previous_channel.send(
@@ -415,6 +417,10 @@ class MarcelMediaPlayer:
                     discord.Color.gold()
                 )
             )
+
+            # Trigger callback as if media had been played to skip to the next
+            self.autoplay = autoplay
+            self.after_callback(None)
             return
 
         self.player_busy = True # lock player
@@ -426,6 +432,7 @@ class MarcelMediaPlayer:
 
             self.player_info = pinfo
 
+            self.reset_timeout()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(
                     pinfo.playback_url,
@@ -440,7 +447,6 @@ class MarcelMediaPlayer:
                 after=self.after_callback
             )
 
-            self.reset_timeout()
             if not silent:
                 await self.previous_channel.send(
                     embed=pinfo.get_embed(
