@@ -1,5 +1,2 @@
+youtube_dl
 discord.py[voice]
-youtube-dl
-pynacl==1.0.1
-gtts
-argparse
