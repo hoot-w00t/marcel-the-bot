@@ -126,6 +126,19 @@ class MarcelMediaPlayer:
             "source_address": "0.0.0.0"
         })
 
+        self.ytdl_pl = youtube_dl.YoutubeDL({
+            "format": "bestaudio/best",
+            "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
+            "restrictfilenames": True,
+            "nocheckcertificate": True,
+            "ignoreerrors": False,
+            "logtostderr": False,
+            "quiet": True,
+            "no_warnings": True,
+            "default_search": "auto",
+            "source_address": "0.0.0.0"
+        })
+
         self.reset_timeout()
 
     @tasks.loop(seconds=15)
@@ -211,13 +224,17 @@ class MarcelMediaPlayer:
         self,
         request: str,
         as_playerinfo: bool = False,
-        parse_all_entries: bool = False):
+        parse_all_entries: bool = False,
+        with_playlists: bool = False):
         """Fetch information about a given request using youtube-dl
         request: can either be a link or a text search
         Returns either a list or a PlayerInfo if as_playerinfo is True"""
 
         try:
-            info = self.ytdl.extract_info(url=request, download=False)
+            if with_playlists:
+                info = self.ytdl_pl.extract_info(url=request, download=False)
+            else:
+                info = self.ytdl.extract_info(url=request, download=False)
 
             if as_playerinfo:
                 entries = info.get("entries", [info])
@@ -630,6 +647,86 @@ class MarcelMediaPlayer:
                     discord.Color.green()
                 )
             )
+
+    async def player_queue_add_playlist(self, request: str, channel: discord.TextChannel = None, silent: bool = False):
+        """Add request results including playlists to the player queue"""
+
+        self.set_previous_channel(channel)
+
+        if len(request) == 0:
+            if not silent:
+                await self.previous_channel.send(
+                    embed=embed_message(
+                        "I cannot add nothing to the player queue",
+                        discord.Color.dark_red()
+                    )
+                )
+            return
+
+        if len(self.player_queue) >= self.player_queue_limit:
+            if not silent:
+                await self.previous_channel.send(
+                    embed=embed_message(
+                        "Cannot add more than {} songs to the player queue".format(self.player_queue_limit),
+                        discord.Color.gold()
+                    )
+                )
+            return
+
+        async with self.previous_channel.typing():
+            pinfos = self.ytdl_fetch(
+                request,
+                as_playerinfo=True,
+                parse_all_entries=True,
+                with_playlists=True
+            )
+
+        if isinstance(pinfos, PlayerInfo):
+            pinfos = [pinfos]
+
+        if len(pinfos) == 0:
+            if not silent:
+                await self.previous_channel.send(
+                    embed=embed_message(
+                        "No results for",
+                        discord.Color.dark_red(),
+                        request
+                    )
+                )
+            return
+
+        added = 0
+        playlist_embed = discord.Embed(color=discord.Color.green())
+        for pinfo in pinfos:
+            self.player_queue.append(pinfo)
+
+            if added == 0:
+                playlist_embed.title = pinfo.title
+                playlist_embed.description = pinfo.author
+                playlist_embed.url = pinfo.url
+                playlist_embed.set_thumbnail(url=pinfo.thumbnail)
+            else:
+                playlist_embed.add_field(
+                    name=pinfo.title,
+                    value=pinfo.author,
+                    inline=False
+                )
+
+            added += 1
+
+            if len(self.player_queue) >= self.player_queue_limit:
+                break
+
+        if added == 1:
+            playlist_embed.set_author(name="Song added to the player queue")
+
+        else:
+            playlist_embed.set_author(name="Added {} songs to the player queue".format(
+                added
+            ))
+
+        if not silent:
+            await self.previous_channel.send(embed=playlist_embed)
 
     async def player_queue_clear(self, channel: discord.TextChannel, silent: bool = False):
         """Clear player queue"""

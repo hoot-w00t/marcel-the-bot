@@ -26,7 +26,7 @@ class MarcelPlugin:
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """`{prefix}join` joins the voice channel that you are in
     `{prefix}leave` leaves the voice channel that the bot is in.
-    `{prefix}play` [request] plays the requested link (supports these: https://rg3.github.io/youtube-dl/supportedsites.html), or searches for the request on YouTube. (Playlists are not supported yet)
+    `{prefix}play` [request] plays the requested link (supports these: https://rg3.github.io/youtube-dl/supportedsites.html), or searches for the request on YouTube. Playlists are supported.
     `{prefix}stop`, `{prefix}pause` and `{prefix}resume` stop, pause or resume the playing media.
     `{prefix}skip` skips to the next song in the player queue (if any).
     `{prefix}add` [request] search for your request and add it to the player queue.
@@ -143,7 +143,7 @@ class MarcelPlugin:
     async def add_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
 
-        await mp.player_queue_add(" ".join(args).strip(), channel=message.channel)
+        await mp.player_queue_add_playlist(" ".join(args).strip(), channel=message.channel)
 
     async def clear_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
@@ -153,7 +153,7 @@ class MarcelPlugin:
     async def queue_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
 
-        queue_embed=discord.Embed(color=discord.Color.blue())
+        queue_embed = discord.Embed(color=discord.Color.blue())
         queue_embed.set_author(name="Player queue")
 
         if len(mp.player_queue) == 0:
