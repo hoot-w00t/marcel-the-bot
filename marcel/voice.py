@@ -592,6 +592,15 @@ class MarcelMediaPlayer:
                     )
                 )
 
+        elif self.is_media_paused():
+            if not silent:
+                await self.previous_channel.send(
+                    embed=self.player_info.get_embed(
+                        "Already paused",
+                        discord.Color.dark_blue()
+                    )
+                )
+
         else:
             if not silent:
                 await self.send_nothing_playing()
@@ -610,6 +619,15 @@ class MarcelMediaPlayer:
                     embed=self.player_info.get_embed(
                         "Resumed",
                         discord.Color.red()
+                    )
+                )
+
+        elif self.is_media_playing():
+            if not silent:
+                await self.previous_channel.send(
+                    embed=self.player_info.get_embed(
+                        "Already playing",
+                        discord.Color.dark_red()
                     )
                 )
 
