@@ -7,7 +7,7 @@ It comes with a good set a plugins for many uses, but you can add/remove any plu
 You can also make your own plugin, see [Make your own plugin](#make-your-own-plugin)
 
 ## Installation
-This program requires [Python 3.3+](https://docs.python.org/3.3/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dl](https://github.com/ytdl-org/youtube-dl/) for the media player.
+This program requires [Python 3.6+](https://docs.python.org/3.3/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dl](https://github.com/ytdl-org/youtube-dl/) for the media player.
 
 Follow [these instructions](https://github.com/Rapptz/discord.py/#installing) to install [discord.py](https://github.com/Rapptz/discord.py/).
 
