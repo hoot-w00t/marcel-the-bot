@@ -30,7 +30,7 @@ class MarcelPlugin:
     `{prefix}reactions` [yes, no] enables/disables random reactions to messages.
     """
     bot_commands = [
-        ("reactions", "reactions_cmd"),
+        ("reactions", "reactions_cmd", "clean_command"),
         ("woah", "woah_cmd")
     ]
 
@@ -114,31 +114,43 @@ class MarcelPlugin:
                             )]
                         )
 
-    async def reactions_cmd(self, message: discord.Message, args: list):
+    async def send_admin_only_message(self, channel: discord.TextChannel, settings: dict):
+        await channel.send(
+            embed=embed_message(
+                self.plugin_name,
+                discord.Color.dark_red(),
+                message="Only the server administrators have access to this command"
+            ),
+            delete_after=settings.get("delete_after")
+        )
+
+    async def reactions_cmd(self, message: discord.Message, args: list, **kwargs):
+        settings = kwargs.get("settings")
+
         if not self.marcel.is_member_admin(message.author):
-            await message.channel.send(
-                embed=embed_message(
-                    "Only the server administrators have access to this command",
-                    discord.Color.red()
-                )
-            )
+            await self.send_admin_only_message(message.channel, settings)
             return
 
-        guild_settings = self.marcel.get_server_settings(message.guild)
         option = " ".join(args).strip().lower()
 
         if option == "yes":
-            guild_settings["reactions_enabled"] = True
-            await message.channel.send("Random reactions are enabled")
+            settings["reactions_enabled"] = True
 
         elif option == "no":
-            guild_settings["reactions_enabled"] = False
-            await message.channel.send("Random reactions are disabled")
+            settings["reactions_enabled"] = False
 
-        else:
-            await message.channel.send("Invalid option")
+        await message.channel.send(
+            embed=embed_message(
+                self.plugin_name,
+                discord.Color.green(),
+                message="Random reactions are {}".format(
+                    "enabled" if settings.get("reactions_enabled") else "disabled"
+                )
+            ),
+            delete_after=settings.get("delete_after")
+        )
 
-    async def woah_cmd(self, message: discord.Message, args: list):
+    async def woah_cmd(self, message: discord.Message, args: list, **kwargs):
         if isinstance(message.channel, discord.abc.GuildChannel):
             await message.add_reaction('\U0001F170')
             await message.add_reaction(self.unicode_emojis.get("m"))
