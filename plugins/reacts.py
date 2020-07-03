@@ -2,6 +2,7 @@ from marcel import Marcel
 from marcel.util import embed_message
 import discord
 import random
+import logging
 
 class MarcelPlugin:
 
@@ -102,17 +103,24 @@ class MarcelPlugin:
                             word_react = False
                             break
 
-                    if word_react:
-                        for letter in word:
-                            await message.add_reaction(self.unicode_emojis.get(letter))
+                    try:
+                        if word_react:
+                            for letter in word:
+                                await message.add_reaction(self.unicode_emojis.get(letter))
 
-                    else:
-                        await message.add_reaction(
-                            self.emojis_emotions[random.randint(
-                                0,
-                                len(self.emojis_emotions) - 1
-                            )]
-                        )
+                        else:
+                            await message.add_reaction(
+                                self.emojis_emotions[random.randint(
+                                    0,
+                                    len(self.emojis_emotions) - 1
+                                )]
+                            )
+
+                    except Exception as e:
+                        logging.error("Random reactions error for guild: {}: {}".format(
+                            message.guild.id,
+                            e
+                        ))
 
     async def send_admin_only_message(self, channel: discord.TextChannel, settings: dict):
         await channel.send(
