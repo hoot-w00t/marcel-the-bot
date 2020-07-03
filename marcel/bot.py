@@ -414,7 +414,6 @@ class Marcel(discord.Client):
         if not (self.is_me(message.author) or not isinstance(message.channel, discord.abc.GuildChannel)):
             guild_settings = self.get_server_settings(message.guild)
             prefix = guild_settings.get("prefix", "!!")
-            clean_commands = guild_settings.get("clean_commands", False)
 
             if message.content.startswith(prefix):
                 args = message.content.split()
@@ -428,11 +427,11 @@ class Marcel(discord.Client):
                         settings=guild_settings, mediaplayer=self.get_server_mediaplayer(message.guild)
                     )
 
-                    if "clean_command" in self.commands.get(command).get("attributes") and clean_commands:
+                    if "clean_command" in self.commands.get(command).get("attributes") and guild_settings.get("clean_commands", False):
                         await self.clean_command(message)
 
                 elif len(command) > 0:
-                    if clean_commands:
+                    if guild_settings.get("clean_commands", False):
                         await self.clean_command(message)
 
                     await message.channel.send(
