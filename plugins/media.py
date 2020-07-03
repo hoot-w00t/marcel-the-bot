@@ -157,15 +157,20 @@ class MarcelPlugin:
         mp = kwargs.get("mediaplayer")
 
         queue_embed = discord.Embed(color=discord.Color.blue())
-        queue_embed.set_author(name="Player queue")
+        added = 0
+        queue_len = len(mp.player_queue)
 
-        if len(mp.player_queue) == 0:
-            queue_embed.title = "The player queue is empty."
+        if queue_len == 0:
+            queue_embed.set_author(name="Player queue")
+            queue_embed.title = "The player queue is empty"
+
         else:
-            first = True
+            queue_embed.set_author(name="Player queue ({} songs)".format(
+                queue_len
+            ))
+
             for media in mp.player_queue:
-                if first:
-                    first = False
+                if added == 0:
                     queue_embed.title = media.title
                     queue_embed.description = media.author
                     queue_embed.url = media.url
@@ -176,6 +181,15 @@ class MarcelPlugin:
                         value=media.author,
                         inline=False
                     )
+                added += 1
+
+                if added == 19 and queue_len > 19:
+                    queue_embed.add_field(
+                        name="...",
+                        value="+ {} songs".format(queue_len - added),
+                        inline=False
+                    )
+                    break
 
         await message.channel.send(embed=queue_embed)
 
