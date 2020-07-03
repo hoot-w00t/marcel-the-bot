@@ -29,14 +29,14 @@ class MarcelPlugin:
     `{prefix}help` shows you this message"""
 
     bot_commands = [
-        ("ping", "ping_cmd"),
-        ("help", "help_cmd")
+        ("ping", "ping_cmd", "clean_command"),
+        ("help", "help_cmd", "clean_command")
     ]
 
     def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
-    async def ping_cmd(self, message: discord.Message, args: list):
+    async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
         """Ping command"""
 
         await message.channel.send(
@@ -47,7 +47,8 @@ class MarcelPlugin:
                 message="in {}ms".format(
                     int(self.marcel.latency * 1000)
                 )
-            )
+            ),
+            delete_after=kwargs.get("settings").get("delete_after")
         )
 
     def get_plugin_help(self, plugin_name: str, prefix: str):
@@ -68,13 +69,10 @@ class MarcelPlugin:
 
         return None
 
-    async def help_cmd(self, message: discord.Message, args: list):
+    async def help_cmd(self, message: discord.Message, args: list, **kwargs):
         """Help command"""
 
-        prefix = self.marcel.get_server_settings(message.guild).get(
-            "prefix",
-            self.marcel.server_settings_default.get("prefix")
-        )
+        prefix = kwargs.get("settings").get("prefix")
         help_lines = list()
 
         if len(args) > 0:
