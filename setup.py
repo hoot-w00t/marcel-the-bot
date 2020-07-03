@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="marcel-the-bot",
-    version="3.0.0",
+    version="3.1.0",
     author="akrocynova",
     author_email="",
     description="Marcel the Discord Bot",
@@ -23,5 +23,9 @@ setuptools.setup(
             "marcel-the-bot=marcel:main"
         ]
     },
-    python_requires='>=3.3',
+    install_requires=[
+        "discord.py[voice]",
+        "youtube-dl"
+    ],
+    python_requires='>=3.6',
 )
