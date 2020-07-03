@@ -184,9 +184,13 @@ class MarcelPlugin:
                 added += 1
 
                 if added == 19 and queue_len > 19:
+                    remaining = queue_len - added
                     queue_embed.add_field(
                         name="...",
-                        value="+ {} songs".format(queue_len - added),
+                        value="+ {} song{}".format(
+                            remaining,
+                            "s" if remaining != 1 else ""
+                        ),
                         inline=False
                     )
                     break

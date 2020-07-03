@@ -270,7 +270,7 @@ class MarcelMediaPlayer:
             if self.voice_client.channel == voice_channel:
                 await self.previous_channel.send(
                     embed=embed_message(
-                        "I'm sorry Dave. I'm afraid I cannot duplicate myself.",
+                        "I'm sorry Dave, I'm afraid I cannot duplicate myself",
                         discord.Color.dark_red()
                     )
                 )
@@ -371,7 +371,7 @@ class MarcelMediaPlayer:
             elif not silent:
                 await self.previous_channel.send(
                     embed=embed_message(
-                        "I'm sorry Dave. I'm afraid I wasn't connected to a voice channel.",
+                        "I'm sorry Dave, I'm afraid I wasn't connected to a voice channel",
                         discord.Color.red()
                     )
                 )
@@ -783,7 +783,7 @@ class MarcelMediaPlayer:
         if not silent:
             await self.previous_channel.send(
                 embed=embed_message(
-                    "Player queue was cleared.",
+                    "Player queue was cleared",
                     discord.Color.dark_blue()
                 )
             )
