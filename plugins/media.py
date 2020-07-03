@@ -84,6 +84,9 @@ class MarcelPlugin:
                 autoplay=True
             )
 
+        elif mp.is_media_paused():
+            await mp.resume(channel=message.channel)
+
         else:
             await mp.skip(message.channel, autoplay=True)
 
