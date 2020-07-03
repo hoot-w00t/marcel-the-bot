@@ -127,7 +127,6 @@ class MarcelMediaPlayer:
         })
 
         self.reset_timeout()
-        self.timeout_loop.start()
 
     @tasks.loop(seconds=15)
     async def timeout_loop(self):
@@ -138,18 +137,35 @@ class MarcelMediaPlayer:
                 if current_time - self.last_action > self.timeout_playing:
                     logging.info("Playing Timeout reached for guild: {}".format(self.guild.id))
                     await self.leave_voice_channel(timed_out=True)
+                    self.timeout_loop.stop()
 
             else:
                 if current_time - self.last_action > self.timeout_idle:
                     logging.info("Idle Timeout reached for guild: {}".format(self.guild.id))
                     await self.leave_voice_channel(timed_out=True)
+                    self.timeout_loop.stop()
+
+        else:
+            self.timeout_loop.stop()
+
+    @timeout_loop.after_loop
+    async def after_timeout_loop(self):
+        logging.info("timeout_loop ended for guild: {}".format(
+            self.guild.id
+        ))
+
+        if self.is_in_voice_channel():
+            logging.error("timeout_loop ended for guild: {}: but voice client is still connected, trying to start it back".format(
+                self.guild.id
+            ))
+            self.timeout_loop.start()
 
     def after_callback(self, error):
         """Callback after a media has finished playing"""
 
-        logging.info("After callback for guild: {}".format(self.guild.id))
+        logging.info("after_callback for guild: {}".format(self.guild.id))
         if error:
-            logging.error("Play callback error for guild: {}: {}".format(self.guild.id, error))
+            logging.error("after_callback error for guild: {}: {}".format(self.guild.id, error))
 
         if self.autoplay:
             self.voice_client.loop.create_task(self.skip(autoplay=True))
@@ -258,6 +274,12 @@ class MarcelMediaPlayer:
             try:
                 self.reset_timeout()
                 self.voice_client = await voice_channel.connect(timeout=10, reconnect=False)
+
+                try:
+                    self.timeout_loop.start()
+
+                except:
+                    pass
 
                 await self.previous_channel.send(
                     embed=embed_message(
