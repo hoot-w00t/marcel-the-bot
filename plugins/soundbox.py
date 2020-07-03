@@ -33,9 +33,9 @@ class MarcelPlugin:
     If no sound is given it will play one at random.
     """
     bot_commands = [
-        ("soundlist", "list_sounds"),
-        ("sound", "play_sound_cmd"),
-        ("s", "play_sound_cmd")
+        ("soundlist", "list_sounds", "clean_command"),
+        ("sound", "play_sound_cmd", "clean_command"),
+        ("s", "play_sound_cmd", "clean_command")
     ]
 
     media_extensions = [
@@ -66,7 +66,7 @@ class MarcelPlugin:
             )
         )
 
-    async def list_sounds(self, message: discord.Message, args: list):
+    async def list_sounds(self, message: discord.Message, args: list, **kwargs):
         if len(self.sounds) == 0:
             await self.send_empty_soundbox(message.channel)
             return
@@ -103,7 +103,7 @@ class MarcelPlugin:
             silent=True,
             autoplay=True if len(mp.player_queue) > 0 else False)
 
-    async def play_sound_cmd(self, message: discord.Message, args: list):
+    async def play_sound_cmd(self, message: discord.Message, args: list, **kwargs):
         if len(self.sounds) == 0:
             await self.send_empty_soundbox(message.channel)
             return
@@ -120,7 +120,8 @@ class MarcelPlugin:
                 embed=embed_message(
                     "This sound doesn't exist",
                     discord.Color.red()
-                )
+                ),
+                delete_after=kwargs.get("settings").get("delete_after")
             )
 
         else:
