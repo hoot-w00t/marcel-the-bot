@@ -41,39 +41,39 @@ class MarcelPlugin:
     """
 
     bot_commands = [
-        ("join", "join_cmd"),
-        ("leave", "leave_cmd"),
-        ("play", "play_cmd"),
-        ("skip", "skip_cmd"),
-        ("stop", "stop_cmd"),
-        ("pause", "pause_cmd"),
-        ("resume", "resume_cmd"),
-        ("search", "search_cmd"),
-        ("add", "add_cmd"),
-        ("clear", "clear_cmd"),
-        ("queue", "queue_cmd"),
-        ("playing", "playing_cmd"),
-        ("volume", "volume_cmd"),
-        ("volume-limit", "volume_limit_cmd"),
-        ("vol", "volume_cmd"),
-        ("vol-limit", "volume_limit_cmd")
+        ("join", "join_cmd", "clean_command"),
+        ("leave", "leave_cmd", "clean_command"),
+        ("play", "play_cmd", "clean_command"),
+        ("skip", "skip_cmd", "clean_command"),
+        ("stop", "stop_cmd", "clean_command"),
+        ("pause", "pause_cmd", "clean_command"),
+        ("resume", "resume_cmd", "clean_command"),
+        ("search", "search_cmd", "clean_command"),
+        ("add", "add_cmd", "clean_command"),
+        ("clear", "clear_cmd", "clean_command"),
+        ("queue", "queue_cmd", "clean_command"),
+        ("playing", "playing_cmd", "clean_command"),
+        ("volume", "volume_cmd", "clean_command"),
+        ("volume-limit", "volume_limit_cmd", "clean_command"),
+        ("vol", "volume_cmd", "clean_command"),
+        ("vol-limit", "volume_limit_cmd", "clean_command")
     ]
 
     def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
-    async def join_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def join_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.join_member_voice_channel(message.author, message.channel)
 
-    async def leave_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def leave_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.leave_voice_channel(message.channel)
 
-    async def play_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def play_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
         request = " ".join(args).strip()
 
         if len(request) > 0:
@@ -87,28 +87,28 @@ class MarcelPlugin:
         else:
             await mp.skip(message.channel, autoplay=True)
 
-    async def skip_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def skip_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.skip(channel=message.channel, autoplay=True)
 
-    async def stop_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def stop_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.stop(channel=message.channel)
 
-    async def pause_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def pause_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.pause(channel=message.channel)
 
-    async def resume_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def resume_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.resume(channel=message.channel)
 
-    async def search_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def search_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
         request = " ".join(args).strip()
 
         if len(request) > 0:
@@ -119,14 +119,14 @@ class MarcelPlugin:
                 await message.channel.send(
                     embed=pinfo.get_embed(
                         "Search result",
-                        discord.Color.blue()
+                        discord.Color.green()
                     )
                 )
             else:
                 await message.channel.send(
                     embed=embed_message(
                         "No results for",
-                        discord.Color.red(),
+                        discord.Color.dark_red(),
                         message=request
                     )
                 )
@@ -134,23 +134,24 @@ class MarcelPlugin:
         else:
             await message.channel.send(
                 embed=embed_message(
-                    "You can't search nothingness.",
-                    discord.Color.red()
-                )
+                    "You can't search nothingness",
+                    discord.Color.dark_red()
+                ),
+                delete_after=kwargs.get("settings").get("delete_after")
             )
 
-    async def add_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def add_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         await mp.player_queue_add(" ".join(args).strip(), channel=message.channel)
 
-    async def clear_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def clear_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
-        await mp.player_queue_clear()
+        await mp.player_queue_clear(channel=message.channel)
 
-    async def queue_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def queue_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         queue_embed=discord.Embed(color=discord.Color.blue())
         queue_embed.set_author(name="Player queue")
@@ -175,8 +176,8 @@ class MarcelPlugin:
 
         await message.channel.send(embed=queue_embed)
 
-    async def playing_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
+    async def playing_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
 
         if mp.player_info.found:
             await message.channel.send(
@@ -191,12 +192,13 @@ class MarcelPlugin:
                 embed=embed_message(
                     "Nothing is playing",
                     discord.Color.blue()
-                )
+                ),
+                delete_after=kwargs.get("settings").get("delete_after")
             )
 
-    async def volume_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
-        guild_settings = self.marcel.get_server_settings(message.guild)
+    async def volume_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
+        settings = kwargs.get("settings")
         request = " ".join(args).strip()
 
         if len(request) > 0:
@@ -205,12 +207,14 @@ class MarcelPlugin:
 
                 if mp.player_volume_limit >= new_volume >= 0:
                     mp.set_volume(new_volume)
-                    guild_settings["volume"] = mp.player_volume
+                    settings["volume"] = mp.player_volume
                     await message.channel.send(
                         embed=embed_message(
-                            "Volume is now at: {}%".format(mp.player_volume * 100),
-                            discord.Color.blue()
-                        )
+                            "Volume is now set to",
+                            discord.Color.blue(),
+                            "{}%".format(mp.player_volume * 100)
+                        ),
+                        delete_after=settings.get("delete_after")
                     )
 
                 else:
@@ -218,7 +222,8 @@ class MarcelPlugin:
                         embed=embed_message(
                             "Volume must be >= 0% and <= {}%".format(mp.player_volume_limit * 100),
                             discord.Color.red()
-                        )
+                        ),
+                        delete_after=settings.get("delete_after")
                     )
 
             except:
@@ -226,20 +231,23 @@ class MarcelPlugin:
                     embed=embed_message(
                         "Invalid volume",
                         discord.Color.red()
-                    )
+                    ),
+                    delete_after=settings.get("delete_after")
                 )
 
         else:
             await message.channel.send(
                 embed=embed_message(
-                    "Current volume: {}%".format(mp.player_volume * 100),
-                    discord.Color.blue()
-                )
+                    "Current volume",
+                    discord.Color.blue(),
+                    "{}%".format(mp.player_volume * 100)
+                ),
+                delete_after=settings.get("delete_after")
             )
 
-    async def volume_limit_cmd(self, message: discord.Message, args: list):
-        mp = self.marcel.get_server_mediaplayer(message.guild)
-        guild_settings = self.marcel.get_server_settings(message.guild)
+    async def volume_limit_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
+        settings = kwargs.get("settings")
         request = " ".join(args).strip()
 
         if len(request) > 0:
@@ -248,7 +256,8 @@ class MarcelPlugin:
                     embed=embed_message(
                         "Only server administrators can change the volume limit",
                         discord.Color.red()
-                    )
+                    ),
+                    delete_after=settings.get("delete_after")
                 )
                 return
 
@@ -257,12 +266,14 @@ class MarcelPlugin:
 
                 if 200.0 >= new_volume >= 0:
                     mp.set_volume_limit(new_volume)
-                    guild_settings["volume_limit"] = mp.player_volume_limit
+                    settings["volume_limit"] = mp.player_volume_limit
                     await message.channel.send(
                         embed=embed_message(
-                            "Volume limit is now at: {}%".format(mp.player_volume_limit * 100),
-                            discord.Color.blue()
-                        )
+                            "Volume limit is now set to",
+                            discord.Color.blue(),
+                            "{}%".format(mp.player_volume_limit * 100)
+                        ),
+                        delete_after=settings.get("delete_after")
                     )
 
                 else:
@@ -270,7 +281,8 @@ class MarcelPlugin:
                         embed=embed_message(
                             "Volume limit must be >= 0% and <= 200%",
                             discord.Color.red()
-                        )
+                        ),
+                        delete_after=settings.get("delete_after")
                     )
 
             except:
@@ -278,13 +290,16 @@ class MarcelPlugin:
                     embed=embed_message(
                         "Invalid volume",
                         discord.Color.red()
-                    )
+                    ),
+                    delete_after=settings.get("delete_after")
                 )
 
         else:
             await message.channel.send(
                 embed=embed_message(
-                    "Current volume limit: {}%".format(mp.player_volume_limit * 100),
-                    discord.Color.blue()
-                )
+                    "Current volume limit",
+                    discord.Color.blue(),
+                    "{}%".format(mp.player_volume_limit * 100)
+                ),
+                delete_after=settings.get("delete_after")
             )
