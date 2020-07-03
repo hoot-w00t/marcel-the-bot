@@ -159,3 +159,21 @@ The Rich Presence plugin reads its configuration from `rich_presence.json` at th
 ### SoundBox
 The SoundBox plugin will read media files from a `soundbox` folder at the root of the configuration folder.
 It currently accepts the following formats: `mp3`, `ogg`, `webm` and `wav`, any of those file types in the `soundbox` folder can then be played.
+
+### Nicknames
+The Nicknames plugin reads its configuration from `nicknames.json` at the root of your bot's configuration folder:
+```json
+{
+    "nicknames": [
+        "Marcel-o-tron",
+        "Herobrine"
+    ],
+
+    "greets": [
+        "Fresh from the oven!",
+        "It's me, Mar!... nevermind."
+    ]
+}
+```
+-   `nicknames` is a list of the different nickname the bot can choose from
+-   `greets` is a list of phrases the bot will say when changing its nickname
