@@ -1,8 +1,8 @@
+from marcel import Marcel
+from marcel.util import embed_message
 import discord
-import marcel
 
 class MarcelPlugin:
-
     """
         Polls plugin for Marcel the Discord Bot
         Copyright (C) 2019-2020  akrocynova
@@ -24,16 +24,12 @@ class MarcelPlugin:
     plugin_name = "Polls"
     plugin_description = "Fast and easy polls using reactions"
     plugin_author = "https://github.com/hoot-w00t"
-    plugin_help = """`{prefix}poll` [question] creates a simple yes/no/whatever poll using reactions. Or you can add answers (up to 20) which range from A to T (letters added automatically, a semicolon is a new answer).
-    ```
-    poll [question]; First answer; Second answer; Third answer
-    ```
-    You can also ping everyone at the same time using `{prefix}pollall` (moderators and administrators only).
+    plugin_help = """`{prefix}poll` [question] creates a simple yes/no/whatever poll using reactions. Or you can add answers (up to 20) separated by `;`.
+    **Example**: `{prefix}poll Question; First answer; Second answer; Third answer`
     """
 
     bot_commands = [
-        ("poll", "poll_cmd"),
-        ("pollall", "pollall_cmd"),
+        ("poll", "poll_cmd", "clean_command")
     ]
 
     unicode_letters = [
@@ -65,7 +61,7 @@ class MarcelPlugin:
         '\U0001F937',
     ]
 
-    def __init__(self, marcel: marcel.Marcel):
+    def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
     async def add_yesno(self, message: discord.Message):
@@ -76,23 +72,20 @@ class MarcelPlugin:
         for i in range(0, count):
             await message.add_reaction(self.unicode_letters[i][1])
 
-            if i >= len(self.unicode_letters) - 1:
-                break
-
-    async def poll_cmd(self, message: discord.Message, args: list, everyone: bool = False):
+    async def poll_cmd(self, message: discord.Message, args: list, **kwargs):
         poll = [x.strip() for x in " ".join(args).strip().split(";")]
         while "" in poll:
             poll.remove("")
 
         if len(poll) == 0:
-            await message.channel.send("You cannot poll with nothing.")
+            await message.channel.send(
+                embed=embed_message(
+                    "You cannot make an empty poll",
+                    discord.Color.dark_red()
+                ),
+                delete_after=kwargs.get("settings").get("delete_after")
+            )
             return
-
-        if message.guild.me.guild_permissions.manage_messages:
-            await message.delete()
-
-        else:
-            await message.channel.send("I need the `Manage Messages` permission to clean the command.")
 
         question = poll[0]
         answers = poll[1:]
@@ -106,7 +99,7 @@ class MarcelPlugin:
                 ))
                 return
 
-            embed_message = discord.Embed(
+            poll_embed = discord.Embed(
                 color=0xff8100,
                 title=question,
                 description="Poll by {}".format(
@@ -115,14 +108,14 @@ class MarcelPlugin:
             )
 
             for i in range(0, answer_count):
-                embed_message.add_field(
+                poll_embed.add_field(
                     name=self.unicode_letters[i][0],
                     value=answers[i],
                     inline=True
                 )
 
         else:
-            embed_message = discord.Embed(
+            poll_embed = discord.Embed(
                 color=0xff8100,
                 title=question,
                 description="Poll by {}".format(
@@ -131,8 +124,7 @@ class MarcelPlugin:
             )
 
         poll_message = await message.channel.send(
-            content="" if not everyone else "@everyone" if self.marcel.is_member_admin(message.author) else "Only moderators and administrators can ping everyone.",
-            embed=embed_message
+            embed=poll_embed
         )
 
         if answer_count > 0:
@@ -140,6 +132,3 @@ class MarcelPlugin:
 
         else:
             await self.add_yesno(poll_message)
-
-    async def pollall_cmd(self, message: discord.Message, args: list):
-        await self.poll_cmd(message, args, everyone=True)
