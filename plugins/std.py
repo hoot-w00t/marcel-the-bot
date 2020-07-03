@@ -1,4 +1,4 @@
-from marcel import Marcel
+from marcel import Marcel, __version__
 from marcel.util import embed_message
 import discord
 import logging
@@ -26,10 +26,12 @@ class MarcelPlugin:
     plugin_description = "Standard and built-in bot commands"
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """`{prefix}ping` pongs! :clap:
+    `{prefix}version` displays the bot's version
     `{prefix}help` shows you this message"""
 
     bot_commands = [
         ("ping", "ping_cmd", "clean_command"),
+        ("version", "version_cmd"),
         ("help", "help_cmd", "clean_command")
     ]
 
@@ -37,8 +39,6 @@ class MarcelPlugin:
         self.marcel = marcel
 
     async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
-        """Ping command"""
-
         await message.channel.send(
             message.author.mention,
             embed=embed_message(
@@ -51,9 +51,16 @@ class MarcelPlugin:
             delete_after=kwargs.get("settings").get("delete_after")
         )
 
-    def get_plugin_help(self, plugin_name: str, prefix: str):
-        """Return a plugin's help message as a list or None if plugin is not found"""
+    async def version_cmd(self, message: discord.Message, args: list, **kwargs):
+        await message.channel.send(
+            embed=embed_message(
+                "Marcel the Bot",
+                discord.Color.blue(),
+                "version {}".format(__version__)
+            )
+        )
 
+    def get_plugin_help(self, plugin_name: str, prefix: str):
         plugin = self.marcel.plugins.get(plugin_name)
         try:
             if plugin:
