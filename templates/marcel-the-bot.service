@@ -9,7 +9,7 @@ WorkingDirectory=/opt/marcel-the-bot
 
 Restart=on-failure
 RestartSec=5
-TimeoutStopSec=5
+TimeoutStopSec=30
 
 User=marcel
 Group=marcel
