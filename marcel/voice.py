@@ -407,6 +407,7 @@ class MarcelMediaPlayer:
             )
             return
 
+        pinfos = None
         if isinstance(request, PlayerInfo):
             pinfo = request
 
@@ -421,20 +422,28 @@ class MarcelMediaPlayer:
 
         else:
             async with self.previous_channel.typing():
-                pinfo = self.ytdl_fetch(
-                    request,as_playerinfo=True,
-                    parse_all_entries=False
+                pinfos = self.ytdl_fetch(
+                    request,
+                    as_playerinfo=True,
+                    parse_all_entries=True,
+                    with_playlists=True
                 )
 
-            if not pinfo.found and not silent:
-                await self.previous_channel.send(
-                    embed=embed_message(
-                        "No results for",
-                        discord.Color.dark_red(),
-                        message=request
-                    )
-                )
-                return
+                if isinstance(pinfos, PlayerInfo):
+                    pinfos = [pinfos]
+
+                if len(pinfos) == 0:
+                    if not silent:
+                        await self.previous_channel.send(
+                            embed=embed_message(
+                                "No results for",
+                                discord.Color.dark_red(),
+                                message=request
+                            )
+                        )
+                        return
+
+                pinfo = pinfos[0]
 
         if not self.is_in_voice_channel() and member:
             await self.join_member_voice_channel(member, self.previous_channel)
@@ -500,6 +509,14 @@ class MarcelMediaPlayer:
             logging.error("play: {}".format(e))
             await self.previous_channel.send("Unexpected error:\n```{}```".format(e))
 
+        if isinstance(pinfos, list):
+            if len(pinfos) > 1:
+                await self.player_queue_add_playlist(
+                    pinfos[1:],
+                    channel=None,
+                    silent=silent
+                )
+
         self.player_busy = False # unlock player
 
     async def skip(
@@ -520,7 +537,9 @@ class MarcelMediaPlayer:
                         discord.Color.blue()
                     )
                 )
-            self.player_info.clear()
+
+            if autoplay:
+                self.player_info.clear()
 
         else:
             await self.play(
@@ -549,6 +568,7 @@ class MarcelMediaPlayer:
                         discord.Color.dark_red()
                     )
                 )
+
             self.player_info.clear()
 
         else:
@@ -648,7 +668,7 @@ class MarcelMediaPlayer:
                 )
             )
 
-    async def player_queue_add_playlist(self, request: str, channel: discord.TextChannel = None, silent: bool = False):
+    async def player_queue_add_playlist(self, request: Union[str, list], channel: discord.TextChannel = None, silent: bool = False):
         """Add request results including playlists to the player queue"""
 
         self.set_previous_channel(channel)
@@ -673,16 +693,23 @@ class MarcelMediaPlayer:
                 )
             return
 
-        async with self.previous_channel.typing():
-            pinfos = self.ytdl_fetch(
-                request,
-                as_playerinfo=True,
-                parse_all_entries=True,
-                with_playlists=True
-            )
+        if isinstance(request, list):
+            if len(request) == 0:
+                return
 
-        if isinstance(pinfos, PlayerInfo):
-            pinfos = [pinfos]
+            pinfos = request
+
+        else:
+            async with self.previous_channel.typing():
+                pinfos = self.ytdl_fetch(
+                    request,
+                    as_playerinfo=True,
+                    parse_all_entries=True,
+                    with_playlists=True
+                )
+
+            if isinstance(pinfos, PlayerInfo):
+                pinfos = [pinfos]
 
         if len(pinfos) == 0:
             if not silent:
