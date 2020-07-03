@@ -422,13 +422,13 @@ class Marcel(discord.Client):
 
                 func = self.get_command_func(command)
                 if func:
+                    if "clean_command" in self.commands.get(command).get("attributes") and guild_settings.get("clean_commands", False):
+                        await self.clean_command(message)
+
                     await func(
                         message, args,
                         settings=guild_settings, mediaplayer=self.get_server_mediaplayer(message.guild)
                     )
-
-                    if "clean_command" in self.commands.get(command).get("attributes") and guild_settings.get("clean_commands", False):
-                        await self.clean_command(message)
 
                 elif len(command) > 0:
                     if guild_settings.get("clean_commands", False):
