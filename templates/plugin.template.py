@@ -12,10 +12,15 @@ class MarcelPlugin:
     # the "help" command
     plugin_help = """`{prefix}ping` pongs! :clap:"""
 
-    # List of tuples in the form (command, target function)
+    # List of tuples in the form (command, target function, ...)
+    # There can be attributes after the target function:
+    #    "clean_command" tells the bot to delete the command message
     # Functions are given the following arguments:
     # message: discord.Message()
     # args:    list() of the interpreted command arguments
+    # **kwargs: dict() containing additionnal information like
+    #                  the guild settings named "settings" (dict)
+    #                  the guild media player named "mediaplayer" (MarcelMediaPlayer)
     bot_commands = [
         ("ping", "ping_cmd")
     ]
@@ -27,7 +32,7 @@ class MarcelPlugin:
         # You can log anything using the logging module
         logging.debug("Hello world!")
 
-    async def ping_cmd(self, message: discord.Message, args: list):
+    async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
         """Ping command"""
 
         await message.channel.send(

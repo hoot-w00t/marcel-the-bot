@@ -36,7 +36,8 @@ sample_config = {
     },
     "server_defaults": {
         "prefix": "!!",
-        "ack_commands": False,
+        "clean_commands": False,
+        "delete_after": 10.0,
         "volume": 1.0,
         "volume_limit": 1.25
     }

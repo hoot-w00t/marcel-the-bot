@@ -48,7 +48,8 @@ Here's a configuration template (which you can find in the `templates` folder):
     },
     "server_defaults": {
         "prefix": "!!",
-        "ack_commands": false,
+        "clean_commands": false,
+        "delete_after": 10.0,
         "volume": 1.0,
         "volume_limit": 1.25
     }
@@ -65,7 +66,8 @@ Here's a configuration template (which you can find in the `templates` folder):
     -   `duration_limit` is the maximum duration of a media (in seconds)
 -   `server_defaults` are the default settings for the Discord servers (each plugin can store its own settings too)
     -   `prefix` is the bot's prefix (by default `!!`)
-    -   `ack_commands` will add reactions to the processed commands
+    -   `clean_commands` will enable the command cleanup for commands that support it
+    -   `delete_after` is the time in seconds before temporary messages are deleted (must be handled by the plugin)
     -   `volume` is the player's volume
     -   `volume_limit` is the player's maximum volume
 
@@ -90,10 +92,15 @@ class MarcelPlugin:
     # the "help" command
     plugin_help = """`{prefix}ping` pongs! :clap:"""
 
-    # List of tuples in the form (command, target function)
+    # List of tuples in the form (command, target function, ...)
+    # There can be attributes after the target function:
+    #    "clean_command" tells the bot to delete the command message
     # Functions are given the following arguments:
     # message: discord.Message()
     # args:    list() of the interpreted command arguments
+    # **kwargs: dict() containing additionnal information like
+    #                  the guild settings named "settings" (dict)
+    #                  the guild media player named "mediaplayer" (MarcelMediaPlayer)
     bot_commands = [
         ("ping", "ping_cmd")
     ]
@@ -105,7 +112,7 @@ class MarcelPlugin:
         # You can log anything using the logging module
         logging.debug("Hello world!")
 
-    async def ping_cmd(self, message: discord.Message, args: list):
+    async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
         """Ping command"""
 
         await message.channel.send(

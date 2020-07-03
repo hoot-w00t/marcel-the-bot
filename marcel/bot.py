@@ -139,6 +139,7 @@ class Marcel(discord.Client):
             for command in module.MarcelPlugin.bot_commands:
                 command_name = command[0]
                 command_funcname = command[1] if len(command) > 1 else command_name
+                command_attributes = command[2:] if len(command) > 2 else tuple()
 
                 if command_name in self.commands:
                     logging.error("Unable to add command: {}: from {}: command already exists".format(
@@ -151,9 +152,11 @@ class Marcel(discord.Client):
                         command_name,
                         plugin_name
                     ))
+
                     self.commands[command_name] = {
                         "plugin_name": plugin_name,
-                        "function_name": command_funcname
+                        "function_name": command_funcname,
+                        "attributes": command_attributes
                     }
 
             self.plugins[plugin_name] = {
@@ -392,18 +395,26 @@ class Marcel(discord.Client):
 
         return member == self.user
 
+    async def clean_command(self, message: discord.Message):
+        """Delete a bot command if 'clean_command' attribute is set"""
+
+        try:
+            await message.delete()
+
+        except:
+            await message.channel.send(
+                embed=embed_message(
+                    "Command cleanup",
+                    discord.Color.gold(),
+                    message="I need the 'Manage messages' permission in order to clean commands"
+                )
+            )
+
     async def on_message(self, message: discord.Message):
         if not (self.is_me(message.author) or not isinstance(message.channel, discord.abc.GuildChannel)):
             guild_settings = self.get_server_settings(message.guild)
-            prefix = guild_settings.get("prefix")
-            ack_commands = guild_settings.get("ack_commands", False)
-
-            if not isinstance(prefix, str):
-                logging.critical("No prefix set for guild {} ({})".format(
-                    message.guild.name,
-                    message.guild.id
-                ))
-                return
+            prefix = guild_settings.get("prefix", "!!")
+            clean_commands = guild_settings.get("clean_commands", False)
 
             if message.content.startswith(prefix):
                 args = message.content.split()
@@ -412,26 +423,26 @@ class Marcel(discord.Client):
 
                 func = self.get_command_func(command)
                 if func:
-                    if ack_commands:
-                        await message.add_reaction("\U0001F44D")
-                    await func(message, args)
+                    await func(
+                        message, args,
+                        settings=guild_settings, mediaplayer=self.get_server_mediaplayer(message.guild)
+                    )
+
+                    if "clean_command" in self.commands.get(command).get("attributes") and clean_commands:
+                        await self.clean_command(message)
 
                 elif len(command) > 0:
-                    if ack_commands:
-                        await message.add_reaction("\U0001F44E")
-                    else:
-                        await message.channel.send("No such command: `{command}`\nUse `{prefix}help` if you're lost".format(
-                            command=command,
-                            prefix=prefix
-                        ))
+                    if clean_commands:
+                        await self.clean_command(message)
 
-                else:
-                    if ack_commands:
-                        await message.add_reaction("\U0001F44E")
-                    else:
-                        await message.channel.send("Use `{prefix}help` if you're lost".format(
-                            prefix=prefix
-                        ))
+                    await message.channel.send(
+                        embed=embed_message(
+                            "Unknown command",
+                            discord.Color.dark_red(),
+                            command
+                        ),
+                        delete_after=guild_settings.get("delete_after")
+                    )
 
         for func in self.get_event_handler_functions("on_message"):
             await func(message)
