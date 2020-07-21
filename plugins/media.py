@@ -116,7 +116,7 @@ class MarcelPlugin:
 
         if len(request) > 0:
             async with message.channel.typing():
-                pinfo = mp.ytdl_fetch(request, as_playerinfo=True)
+                pinfo = await mp.ytdl_fetch(request, as_playerinfo=True)
 
             if pinfo.found:
                 await message.channel.send(
