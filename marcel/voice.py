@@ -419,7 +419,7 @@ class MarcelMediaPlayer:
                 )
 
             if isinstance(pinfos, PlayerInfo):
-                pinfos = [pinfos]
+                pinfos = [pinfos] if pinfos.found else list()
 
             if len(pinfos) == 0:
                 if not silent:
@@ -430,7 +430,7 @@ class MarcelMediaPlayer:
                             message=request
                         )
                     )
-                    return
+                return
 
             pinfo = pinfos[0]
 
@@ -716,7 +716,7 @@ class MarcelMediaPlayer:
                 )
 
             if isinstance(pinfos, PlayerInfo):
-                pinfos = [pinfos]
+                pinfos = [pinfos] if pinfos.found else list()
 
         if len(pinfos) == 0:
             if not silent:
