@@ -146,7 +146,7 @@ class MarcelPlugin:
     async def add_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
 
-        await mp.player_queue_add_playlist(" ".join(args).strip(), channel=message.channel)
+        await mp.player_queue_add(" ".join(args).strip(), channel=message.channel)
 
     async def clear_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
