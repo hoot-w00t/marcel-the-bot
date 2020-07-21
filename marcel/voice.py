@@ -2,6 +2,7 @@ from typing import Union
 from datetime import timedelta
 from discord.ext import tasks
 from marcel.util import embed_message
+import asyncio
 import discord
 import time
 import youtube_dl
@@ -112,32 +113,7 @@ class MarcelMediaPlayer:
         self.player_info = PlayerInfo()
         self.player_queue = list()
 
-        self.ytdl = youtube_dl.YoutubeDL({
-            "format": "bestaudio/best",
-            "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-            "restrictfilenames": True,
-            "noplaylist": True,
-            "nocheckcertificate": True,
-            "ignoreerrors": False,
-            "logtostderr": False,
-            "quiet": True,
-            "no_warnings": True,
-            "default_search": "auto",
-            "source_address": "0.0.0.0"
-        })
-
-        self.ytdl_pl = youtube_dl.YoutubeDL({
-            "format": "bestaudio/best",
-            "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-            "restrictfilenames": True,
-            "nocheckcertificate": True,
-            "ignoreerrors": False,
-            "logtostderr": False,
-            "quiet": True,
-            "no_warnings": True,
-            "default_search": "auto",
-            "source_address": "0.0.0.0"
-        })
+        self.loop = asyncio.get_event_loop()
 
         self.reset_timeout()
 
@@ -220,7 +196,7 @@ class MarcelMediaPlayer:
             found=True if entry.get("url") else False
         )
 
-    def ytdl_fetch(
+    async def ytdl_fetch(
         self,
         request: str,
         as_playerinfo: bool = False,
@@ -231,10 +207,25 @@ class MarcelMediaPlayer:
         Returns either a list or a PlayerInfo if as_playerinfo is True"""
 
         try:
-            if with_playlists:
-                info = self.ytdl_pl.extract_info(url=request, download=False)
-            else:
-                info = self.ytdl.extract_info(url=request, download=False)
+            ytdl_opts = {
+                "format": "bestaudio/best",
+                "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
+                "restrictfilenames": True,
+                "nocheckcertificate": True,
+                "ignoreerrors": False,
+                "logtostderr": False,
+                "quiet": True,
+                "no_warnings": True,
+                "default_search": "auto",
+                "source_address": "0.0.0.0"
+            }
+
+            if not with_playlists:
+                ytdl_opts["noplaylist"] = True
+
+            with youtube_dl.YoutubeDL(params=ytdl_opts) as ytdl:
+                await self.loop.run_in_executor(None, ytdl.cache.remove)
+                info = await self.loop.run_in_executor(None, lambda: ytdl.extract_info(url=request, download=False))
 
             if as_playerinfo:
                 entries = info.get("entries", [info])
@@ -318,8 +309,6 @@ class MarcelMediaPlayer:
                         message=voice_channel.name
                     )
                 )
-
-        self.ytdl.cache.remove()
 
     async def join_member_voice_channel(self, member: discord.Member, channel: discord.TextChannel = None):
         """Join or move to the voice channel the member is in"""
@@ -422,28 +411,28 @@ class MarcelMediaPlayer:
 
         else:
             async with self.previous_channel.typing():
-                pinfos = self.ytdl_fetch(
+                pinfos = await self.ytdl_fetch(
                     request,
                     as_playerinfo=True,
                     parse_all_entries=True,
                     with_playlists=True
                 )
 
-                if isinstance(pinfos, PlayerInfo):
-                    pinfos = [pinfos]
+            if isinstance(pinfos, PlayerInfo):
+                pinfos = [pinfos]
 
-                if len(pinfos) == 0:
-                    if not silent:
-                        await self.previous_channel.send(
-                            embed=embed_message(
-                                "No results for",
-                                discord.Color.dark_red(),
-                                message=request
-                            )
+            if len(pinfos) == 0:
+                if not silent:
+                    await self.previous_channel.send(
+                        embed=embed_message(
+                            "No results for",
+                            discord.Color.dark_red(),
+                            message=request
                         )
-                        return
+                    )
+                    return
 
-                pinfo = pinfos[0]
+            pinfo = pinfos[0]
 
         if not self.is_in_voice_channel() and member:
             await self.join_member_voice_channel(member, self.previous_channel)
@@ -664,7 +653,7 @@ class MarcelMediaPlayer:
 
         else:
             async with self.previous_channel.typing():
-                pinfo = self.ytdl_fetch(request, as_playerinfo=True)
+                pinfo = await self.ytdl_fetch(request, as_playerinfo=True)
 
         if not pinfo.found:
             if not silent:
@@ -719,7 +708,7 @@ class MarcelMediaPlayer:
 
         else:
             async with self.previous_channel.typing():
-                pinfos = self.ytdl_fetch(
+                pinfos = await self.ytdl_fetch(
                     request,
                     as_playerinfo=True,
                     parse_all_entries=True,
