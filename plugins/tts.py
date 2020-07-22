@@ -5,6 +5,7 @@ from pathlib import Path
 import discord
 import tempfile
 import gtts
+import logging
 
 class MarcelPlugin:
 
@@ -43,7 +44,9 @@ class MarcelPlugin:
     def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
+        logging.info("Fetching Google TTS langs...")
         self.langs = gtts.lang.tts_langs()
+        logging.info("Done fetching Google TTS langs")
 
     def generate_tts(self, text: str, lang: str, filename: str):
         """Generate the TTS audio"""
@@ -65,13 +68,16 @@ class MarcelPlugin:
             pinfo = PlayerInfo(
                 title="Text To Speech",
                 author=self.plugin_name,
-                playback_url=self.generate_tts(
-                    "{}: {}".format(
-                        message.author.display_name,
-                        text
-                    ),
-                    lang,
-                    str(message.guild.id)
+                playback_url=await self.marcel.loop.run_in_executor(
+                    None,
+                    lambda: self.generate_tts(
+                        "{}: {}".format(
+                            message.author.display_name,
+                            text
+                        ),
+                        lang,
+                        str(message.guild.id)
+                    )
                 ),
                 found=True
             )
