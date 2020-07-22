@@ -60,7 +60,7 @@ class MarcelPlugin:
             )
         )
 
-    def get_plugin_help(self, plugin_name: str, prefix: str):
+    async def get_plugin_help(self, plugin_name: str, prefix: str):
         plugin = self.marcel.plugins.get(plugin_name)
         try:
             if plugin:
@@ -94,7 +94,7 @@ class MarcelPlugin:
                         plugin
                     ))
 
-                    plugin_help_lines = self.get_plugin_help(plugin, prefix)
+                    plugin_help_lines = await self.get_plugin_help(plugin, prefix)
                     if plugin_help_lines:
                         help_lines += plugin_help_lines
                     else:
@@ -111,7 +111,7 @@ class MarcelPlugin:
                         request = plugin
                         break
 
-                plugin_help = self.get_plugin_help(request, prefix)
+                plugin_help =  await self.get_plugin_help(request, prefix)
 
                 if plugin_help == None:
                     help_lines.append("No help found for `{}`. You can get a list of the plugins with `{prefix}help`.".format(

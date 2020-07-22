@@ -165,8 +165,9 @@ class MarcelPlugin:
             queue_embed.title = "The player queue is empty"
 
         else:
-            queue_embed.set_author(name="Player queue ({} songs)".format(
-                queue_len
+            queue_embed.set_author(name="Player queue ({} song{})".format(
+                queue_len,
+                "s" if queue_len != 1 else ""
             ))
 
             for media in mp.player_queue:
@@ -174,7 +175,8 @@ class MarcelPlugin:
                     queue_embed.title = media.title
                     queue_embed.description = media.author
                     queue_embed.url = media.url
-                    queue_embed.set_thumbnail(url=media.thumbnail)
+                    if media.thumbnail:
+                        queue_embed.set_thumbnail(url=media.thumbnail)
                 else:
                     queue_embed.add_field(
                         name=media.title,

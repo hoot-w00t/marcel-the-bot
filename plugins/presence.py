@@ -56,9 +56,7 @@ class MarcelPlugin:
             self.messages = list()
 
         for message in self.messages:
-            message["text"] = message.get("text", "").format(
-                version=__version__
-            )
+            message["text"] = message.get("text", "")
 
             message["duration"] = message.get("duration", 10)
             if message["duration"] <= 0:
@@ -93,7 +91,10 @@ class MarcelPlugin:
                     await self.marcel.change_presence(
                         status=message.get("status"),
                         activity=discord.Activity(
-                            name=message.get("text"),
+                            name=message.get("text").format(
+                                version=__version__,
+                                plugin_count=len(self.marcel.plugins)
+                            ),
                             type=message.get("type")
                         )
                     )

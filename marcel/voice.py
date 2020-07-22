@@ -40,7 +40,16 @@ class PlayerInfo:
         self.title = title
         self.author = author
         self.thumbnail = thumbnail
-        self.duration = duration
+
+        if isinstance(duration, int):
+            self.duration = duration
+        else:
+            try:
+                self.duration = int(duration)
+
+            except:
+                self.duration = 0
+
         self.url = url
         self.playback_url = playback_url
         self.found = found
@@ -76,7 +85,7 @@ class PlayerInfo:
             embed.set_thumbnail(url=self.thumbnail)
 
         if show_duration and self.duration > 0:
-            embed.set_footer(text=str(timedelta(seconds=self.duration)))
+            embed.set_footer(text=str(timedelta(seconds=self.duration)).split(".")[0].strip())
 
         return embed
 
@@ -157,7 +166,7 @@ class MarcelMediaPlayer:
             logging.error("after_callback error for guild: {}: {}".format(self.guild.id, error))
 
         if self.autoplay:
-            self.voice_client.loop.create_task(self.skip(autoplay=True))
+            self.loop.create_task(self.skip(autoplay=True))
 
     def reset_timeout(self):
         self.last_action = time.time()
@@ -210,6 +219,9 @@ class MarcelMediaPlayer:
             ytdl_opts = {
                 "format": "bestaudio/best",
                 "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
+                "simulate": True,
+                "skip_download": True,
+                "playlistend": self.player_queue_limit,
                 "restrictfilenames": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
@@ -498,6 +510,8 @@ class MarcelMediaPlayer:
             logging.error("play: {}".format(e))
             await self.previous_channel.send("Unexpected error:\n```{}```".format(e))
 
+        self.player_busy = False # unlock player
+
         if isinstance(pinfos, list):
             if len(pinfos) > 1:
                 await self.player_queue_add(
@@ -505,8 +519,6 @@ class MarcelMediaPlayer:
                     channel=None,
                     silent=silent
                 )
-
-        self.player_busy = False # unlock player
 
     async def skip(
         self,
@@ -690,7 +702,8 @@ class MarcelMediaPlayer:
                 playlist_embed.title = pinfo.title
                 playlist_embed.description = pinfo.author
                 playlist_embed.url = pinfo.url
-                playlist_embed.set_thumbnail(url=pinfo.thumbnail)
+                if pinfo.thumbnail:
+                    playlist_embed.set_thumbnail(url=pinfo.thumbnail)
 
             elif added <= 19:
                 playlist_embed.add_field(
@@ -702,7 +715,7 @@ class MarcelMediaPlayer:
             added += 1
 
             if len(self.player_queue) >= self.player_queue_limit:
-                if not silent:
+                if not silent and len(pinfos) > added:
                     await self.previous_channel.send(
                         embed=embed_message(
                             "Discarded {} songs because the player queue is full".format(
@@ -750,7 +763,18 @@ class MarcelMediaPlayer:
                 )
             )
 
-    def set_volume(self, volume: float):
+    def player_queue_set_limit(self, limit: int) -> None:
+        """Set the player queue limit"""
+
+        if limit <= 0:
+            return
+
+        self.player_queue_limit = limit
+
+        while len(self.player_queue) > self.player_queue_limit:
+            self.player_queue.pop()
+
+    def set_volume(self, volume: float) -> None:
         """Set player volume"""
 
         volume = round(volume, 2)
@@ -761,13 +785,13 @@ class MarcelMediaPlayer:
         if self.is_media_playing() or self.is_media_paused():
             self.voice_client.source.volume = self.player_volume
 
-    def set_volume_limit(self, volume: float):
+    def set_volume_limit(self, volume: float) -> None:
         """Set volume limit"""
 
         self.player_volume_limit = round(volume, 2)
         self.apply_volume_limit()
 
-    def apply_volume_limit(self):
+    def apply_volume_limit(self) -> None:
         """Make sure that the volume limit is respected"""
 
         if self.player_volume > self.player_volume_limit:
