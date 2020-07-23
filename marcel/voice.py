@@ -350,7 +350,7 @@ class MarcelMediaPlayer:
 
         try:
             if self.is_in_voice_channel():
-                if self.is_media_playing():
+                if self.is_media_playing() or self.is_media_paused():
                     self.autoplay = False
                     self.voice_client.stop()
 
@@ -559,7 +559,7 @@ class MarcelMediaPlayer:
         self.set_previous_channel(channel)
 
         self.autoplay = False
-        if self.is_media_playing():
+        if self.is_media_playing() or self.is_media_paused():
             self.voice_client.stop()
 
             if not silent:
