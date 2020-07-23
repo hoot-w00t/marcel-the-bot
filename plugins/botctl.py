@@ -25,7 +25,7 @@ class MarcelPlugin:
     plugin_description = "Owner-only commands to control the bot"
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """`{prefix}reload-all` reload all plugins
-    `{prefix}reload` [plugin] reload given plugin
+    `{prefix}reload` [plugin] reload given plugin (or try to load unloaded plugins if no name is given)
     `{prefix}unload` [plugin] unload given plugin
     `{prefix}save-settings` save server settings
     """
@@ -71,10 +71,11 @@ class MarcelPlugin:
         ctlmsg = await message.channel.send(embed=ctlembed)
 
         try:
-            self.marcel.reload_plugins()
+            loaded_plugins = self.marcel.reload_plugins()
             ctlembed = embed_message(
                 "Reload complete",
-                discord.Color.green()
+                discord.Color.green(),
+                "{} plugins loaded".format(loaded_plugins)
             )
 
         except Exception as e:
@@ -96,37 +97,62 @@ class MarcelPlugin:
 
         request = " ".join(args).strip()
 
-        # Try to auto-complete the plugin name
-        for plugin in self.marcel.plugins:
-            if plugin.lower().startswith(request.lower()):
-                ctlembed = embed_message(
-                    "Reloading plugin...",
-                    discord.Color.blue(),
-                    message=plugin
-                )
-                ctlmsg = await message.channel.send(embed=ctlembed)
+        if len(request) == 0:
+            loaded_plugins = self.marcel.load_plugins()
 
-                if self.marcel.reload_plugin(plugin):
-                    ctlembed = embed_message(
-                        "Plugin reloaded",
-                        discord.Color.green(),
-                        message=plugin
-                    )
-
-                else:
-                    ctlembed = embed_message(
-                        "Failed to reload plugin",
-                        discord.Color.dark_red(),
-                        message=plugin
-                    )
-
-                await ctlmsg.edit(
-                    embed=ctlembed,
+            if loaded_plugins > 0:
+                await message.channel.send(
+                    embed=embed_message(
+                        "Loaded {} plugin{}".format(
+                            loaded_plugins,
+                            "s" if loaded_plugins != 1 else ""
+                        ),
+                        discord.Color.green()
+                    ),
                     delete_after=kwargs.get("settings").get("delete_after")
                 )
-                return
+            else:
+                await message.channel.send(
+                    embed=embed_message(
+                        "No plugin loaded",
+                        discord.Color.dark_red()
+                    ),
+                    delete_after=kwargs.get("settings").get("delete_after")
+                )
 
-        await self.send_unknown_plugin(message.channel, kwargs.get("settings"))
+        else:
+            # Try to auto-complete the plugin name
+            for plugin in self.marcel.plugins:
+                if plugin.lower().startswith(request.lower()):
+                    ctlembed = embed_message(
+                        "Reloading plugin...",
+                        discord.Color.blue(),
+                        message=plugin
+                    )
+                    ctlmsg = await message.channel.send(embed=ctlembed)
+
+                    if self.marcel.reload_plugin(plugin):
+                        ctlembed = embed_message(
+                            "Plugin reloaded",
+                            discord.Color.green(),
+                            message=plugin
+                        )
+
+                    else:
+                        ctlembed = embed_message(
+                            "Failed to reload plugin",
+                            discord.Color.dark_red(),
+                            message=plugin
+                        )
+
+                    await ctlmsg.edit(
+                        embed=ctlembed,
+                        delete_after=kwargs.get("settings").get("delete_after")
+                    )
+                    return
+
+            # Auto-completion failed, plugin is not loaded
+            await self.send_unknown_plugin(message.channel, kwargs.get("settings"))
 
     async def unload_cmd(self, message: discord.Message, args: list, **kwargs):
         if not self.marcel.is_member_owner(message.author):
