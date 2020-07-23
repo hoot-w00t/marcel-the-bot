@@ -7,6 +7,9 @@ fi
 
 INSTALL_DIR="/opt/marcel-the-bot"
 
+echo "Stopping service..."
+systemctl stop marcel-the-bot.service
+
 echo "Updating Marcel the Bot..."
 
 su -c "/usr/bin/python3 -m pip install --user --upgrade -r requirements.txt" marcel
@@ -21,6 +24,6 @@ chmod -R 744 "$INSTALL_DIR/plugins"
 
 echo "Restarting service..."
 
-systemctl restart marcel-the-bot.service
+systemctl start marcel-the-bot.service
 
 echo "Finished updating!"
