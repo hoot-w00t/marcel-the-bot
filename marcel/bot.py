@@ -189,8 +189,11 @@ class Marcel(discord.Client):
                 logging.info("Executing on_unload function for plugin: {}".format(name))
                 unload_func()
 
-            except:
-                pass
+            except Exception as e:
+                logging.error("on_unload() for plugin: {}: {}".format(
+                    name,
+                    e
+                ))
 
             for command in list(self.commands):
                 if self.commands[command]["plugin_name"] == name:
