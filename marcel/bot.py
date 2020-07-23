@@ -187,7 +187,7 @@ class Marcel(discord.Client):
                 on_unload_func = getattr(plugin.get("module"), "on_unload")
 
                 logging.info("Executing on_unload function for plugin: {}".format(name))
-                unload_func()
+                on_unload_func()
 
             except Exception as e:
                 logging.error("on_unload() for plugin: {}: {}".format(
