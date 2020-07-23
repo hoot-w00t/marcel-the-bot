@@ -117,8 +117,9 @@ class Marcel(discord.Client):
         for owner in self.cfg.get("owners", list()):
             self.owners.append(self.get_user(int(owner)))
 
-    def load_plugin(self, filepath: Union[str, Path]):
-        """Load plugin"""
+    def load_plugin(self, filepath: Union[str, Path]) -> bool:
+        """Load plugin
+        Return True if plugin was loaded, False on failure"""
 
         if not isinstance(filepath, Path):
             filepath = Path(filepath).expanduser().resolve()
@@ -174,16 +175,18 @@ class Marcel(discord.Client):
 
         return False
 
-    def unload_plugin(self, name: str):
-        """Unload plugin by name"""
+    def unload_plugin(self, name: str) -> bool:
+        """Unload plugin by name
+        Return True if plugin was unloaded, False on failure"""
 
         plugin = self.plugins.get(name)
         if plugin:
             logging.info("Unloading plugin: {}".format(name))
 
             try:
-                unload_func = getattr(plugin.get("module"), "unload")
-                logging.info("Executing unload function for plugin: {}".format(name))
+                on_unload_func = getattr(plugin.get("module"), "on_unload")
+
+                logging.info("Executing on_unload function for plugin: {}".format(name))
                 unload_func()
 
             except:
@@ -211,22 +214,43 @@ class Marcel(discord.Client):
 
         return False
 
-    def load_plugins(self):
-        """Load all plugins from the plugins folder"""
+    def load_plugins(self) -> int:
+        """Load all plugins from the plugins folder
+        Return the number of successfully loaded plugins"""
 
-        logging.info("Loading plugins from folder: {}".format(self.plugins_path))
+        loaded_plugins = 0
+
+        logging.info("Loading plugins from folder: {}".format(
+            self.plugins_path
+        ))
         for filename in self.plugins_path.iterdir():
             if filename.name.lower().endswith(".py"):
-                self.load_plugin(filename)
+                if self.load_plugin(filename):
+                    loaded_plugins += 1
 
-    def unload_plugins(self):
-        """Unload all currently loaded plugins"""
+        return loaded_plugins
 
-        for plugin in list(self.plugins):
-            self.unload_plugin(plugin)
+    def unload_plugins(self, plugins: list = None) -> int:
+        """Unload plugin list or all currently loaded plugins if list is None
+        Return the number of successfully unloaded plugins"""
 
-    def reload_plugin(self, name: str):
-        """Reload plugin"""
+        unloaded_plugins = 0
+
+        if plugins:
+            for plugin in plugins:
+                if self.unload_plugin(plugin):
+                    unloaded_plugins += 1
+
+        else:
+            for plugin in list(self.plugins):
+                if self.unload_plugin(plugin):
+                    unloaded_plugins += 1
+
+        return unloaded_plugins
+
+    def reload_plugin(self, name: str) -> bool:
+        """Reload plugin
+        Return True if plugin was loaded, False on failure"""
 
         filepath = self.plugins.get(name, dict()).get("filepath")
         if filepath:
@@ -235,13 +259,12 @@ class Marcel(discord.Client):
 
         return False
 
-    def reload_plugins(self):
-        """Reload all plugins from the plugins folder"""
+    def reload_plugins(self, plugins: list = None) -> int:
+        """Reload plugin list or all plugins if list is None from the plugins folder
+        Return the number of successfully loaded plugins"""
 
-        self.unload_plugins()
-        self.load_plugins()
-
-        return True
+        self.unload_plugins(plugins)
+        return self.load_plugins()
 
     def get_command_func(self, command: str):
         """Return command function or None if it is not found"""
