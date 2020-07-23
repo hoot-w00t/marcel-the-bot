@@ -1,4 +1,5 @@
 from marcel import Marcel, __version__
+from discord.ext import tasks
 import discord
 import asyncio
 import json
@@ -68,44 +69,49 @@ class MarcelPlugin:
             )
             message["status"] = self.status_types.get(message.get("status"))
 
-        self.stop = False
-        self.marcel.loop.create_task(self.presence_background())
+        self.index = 0
+        self.count = len(self.messages)
 
-    def unload(self):
+        if self.marcel.is_ready():
+            self.rich_presence_loop.start()
+        else:
+            self.marcel.register_event_handler(self, "on_ready", "on_ready")
+
+    async def on_ready(self):
+        """Start Rich Presence Loop when client is ready"""
+
+        self.rich_presence_loop.start()
+
+    def on_unload(self):
         """Stop background task when unloading plugin"""
 
-        self.stop = True
+        self.rich_presence_loop.cancel()
 
-    def stop_background_task(self):
-        return self.stop or self.marcel.is_closed() or len(self.messages) == 0
-
-    async def presence_background(self):
+    @tasks.loop()
+    async def rich_presence_loop(self):
         try:
-            if not self.marcel.is_ready():
-                logging.debug("Rich Presence: Waiting to be ready...")
-                await self.marcel.wait_until_ready()
+            logging.debug("Rich Presence switching to message at index {}".format(
+                self.index
+            ))
+            message = self.messages[self.index]
 
-            logging.debug("Rich Presence: Starting")
-            while not self.stop_background_task():
-                for message in self.messages:
-                    await self.marcel.change_presence(
-                        status=message.get("status"),
-                        activity=discord.Activity(
-                            name=message.get("text").format(
-                                version=__version__,
-                                plugin_count=len(self.marcel.plugins)
-                            ),
-                            type=message.get("type")
-                        )
-                    )
+            await self.marcel.change_presence(
+                status=message.get("status"),
+                activity=discord.Activity(
+                    name=message.get("text").format(
+                        version=__version__,
+                        plugin_count=len(self.marcel.plugins)
+                    ),
+                    type=message.get("type")
+                )
+            )
 
-                    for i in range(0, message["duration"]):
-                        if self.stop_background_task():
-                            raise Exception("Force stopped")
+            self.rich_presence_loop.change_interval(seconds=message.get("duration", 10))
 
-                        await asyncio.sleep(1)
+            if self.index + 1>= self.count:
+                self.index = 0
+            else:
+                self.index += 1
 
         except Exception as e:
-            logging.error("Rich Presence: {}".format(e))
-
-        logging.error("Rich Presence background task exitted")
+            logging.error("Rich Presence Loop: {}".format(e))
