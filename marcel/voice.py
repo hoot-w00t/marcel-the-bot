@@ -210,7 +210,8 @@ class MarcelMediaPlayer:
         request: str,
         as_playerinfo: bool = False,
         parse_all_entries: bool = False,
-        with_playlists: bool = False):
+        with_playlists: bool = False,
+        playlistend: int = 0):
         """Fetch information about a given request using youtube-dl
         request: can either be a link or a text search
         Returns either a list or a PlayerInfo if as_playerinfo is True"""
@@ -221,7 +222,7 @@ class MarcelMediaPlayer:
                 "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
                 "simulate": True,
                 "skip_download": True,
-                "playlistend": self.player_queue_limit,
+                "playlistend": self.player_queue_limit if playlistend <= 0 else playlistend,
                 "restrictfilenames": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
@@ -350,7 +351,7 @@ class MarcelMediaPlayer:
 
         try:
             if self.is_in_voice_channel():
-                if self.is_media_playing():
+                if self.is_media_playing() or self.is_media_paused():
                     self.autoplay = False
                     self.voice_client.stop()
 
@@ -559,7 +560,7 @@ class MarcelMediaPlayer:
         self.set_previous_channel(channel)
 
         self.autoplay = False
-        if self.is_media_playing():
+        if self.is_media_playing() or self.is_media_paused():
             self.voice_client.stop()
 
             if not silent:

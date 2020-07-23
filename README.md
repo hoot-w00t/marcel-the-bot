@@ -112,6 +112,11 @@ class MarcelPlugin:
         # You can log anything using the logging module
         logging.debug("Hello world!")
 
+    def on_unload(self):
+        # This function will be called by the bot when unloading the plugin
+        # You can use it to stop background tasks for example
+        pass
+
     async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
         """Ping command"""
 
