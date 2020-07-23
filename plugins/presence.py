@@ -87,7 +87,7 @@ class MarcelPlugin:
 
         self.rich_presence_loop.cancel()
 
-    @tasks.loop()
+    @tasks.loop(seconds=10)
     async def rich_presence_loop(self):
         try:
             logging.debug("Rich Presence switching to message at index {}".format(
