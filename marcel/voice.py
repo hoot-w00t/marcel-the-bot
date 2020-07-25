@@ -7,6 +7,7 @@ import discord
 import time
 import youtube_dl
 import logging
+import random
 
 """
     Marcel the Discord Bot
@@ -394,12 +395,14 @@ class MarcelMediaPlayer:
         member: discord.Member = None,
         silent: bool = False,
         autoplay: bool = False,
-        respect_duration_limit: bool = True):
+        respect_duration_limit: bool = True,
+        shuffle: bool = False):
         """Play a media
         If request is not a PlayerInfo, it youtube-dl to fetch information
         silent: If True no messages will be sent to the previous text channel
         autoplay: whether autoplay should be enabled
-        respect_duration_limit: If False, ignore the media duration limit"""
+        respect_duration_limit: If False, ignore the media duration limit
+        shuffle: If True, shuffle playlists before adding them to the queue"""
 
         self.set_previous_channel(channel)
 
@@ -445,7 +448,8 @@ class MarcelMediaPlayer:
                 await self.player_queue_add(
                     pinfos[1:],
                     channel=None,
-                    silent=silent
+                    silent=silent,
+                    shuffle=shuffle
                 )
 
         if not self.is_in_voice_channel() and member:
@@ -649,7 +653,12 @@ class MarcelMediaPlayer:
             if not silent:
                 await self.send_nothing_playing()
 
-    async def player_queue_add(self, request: Union[str, list, PlayerInfo], channel: discord.TextChannel = None, silent: bool = False):
+    async def player_queue_add(
+        self,
+        request: Union[str, list, PlayerInfo],
+        channel: discord.TextChannel = None,
+        silent: bool = False,
+        shuffle: bool = False):
         """Add PlayerInfo or PlayerInfo list or request results (including playlists) to the player queue"""
 
         self.set_previous_channel(channel)
@@ -693,6 +702,9 @@ class MarcelMediaPlayer:
                     )
                 )
             return
+
+        if shuffle:
+            random.shuffle(pinfos)
 
         if len(self.player_queue) >= self.player_queue_limit:
             if not silent:
@@ -773,6 +785,31 @@ class MarcelMediaPlayer:
                 embed=embed_message(
                     "Player queue was cleared",
                     discord.Color.dark_blue()
+                )
+            )
+
+    async def player_queue_shuffle(self, channel: discord.TextChannel, silent: bool = False):
+        """Shuffle player queue"""
+
+        self.set_previous_channel(channel)
+
+        if len(self.player_queue) == 0:
+            if not silent:
+                await self.previous_channel.send(
+                    embed=embed_message(
+                        "Player queue is empty",
+                        discord.Color.dark_blue()
+                    )
+                )
+            return
+
+        random.shuffle(self.player_queue)
+
+        if not silent:
+            await self.previous_channel.send(
+                embed=embed_message(
+                    "Shuffled player queue",
+                    discord.Color.blue()
                 )
             )
 

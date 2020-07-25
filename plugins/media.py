@@ -30,6 +30,7 @@ class MarcelPlugin:
     `{prefix}stop`, `{prefix}pause` and `{prefix}resume` stop, pause or resume the playing media.
     `{prefix}skip` skips to the next song in the player queue (if any).
     `{prefix}add` [request] search for your request and add it to the player queue.
+    `{prefix}shuffle` [request] is the same as play but will also shuffle playlists. If no request is given, shuffle the player queue.
     `{prefix}search` [request] searches for your request.
     `{prefix}clear` clears the player queue.
     `{prefix}queue` displays the player queue.
@@ -50,6 +51,7 @@ class MarcelPlugin:
         ("resume", "resume_cmd", "clean_command"),
         ("search", "search_cmd", "clean_command"),
         ("add", "add_cmd", "clean_command"),
+        ("shuffle", "shuffle_cmd", "clean_command"),
         ("clear", "clear_cmd", "clean_command"),
         ("queue", "queue_cmd", "clean_command"),
         ("playing", "playing_cmd", "clean_command"),
@@ -89,6 +91,22 @@ class MarcelPlugin:
 
         else:
             await mp.skip(message.channel, autoplay=True)
+
+    async def shuffle_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
+        request = " ".join(args).strip()
+
+        if len(request) > 0:
+            await mp.play(
+                request,
+                channel=message.channel,
+                member=message.author,
+                autoplay=True,
+                shuffle=True
+            )
+
+        else:
+            await mp.player_queue_shuffle(channel=message.channel)
 
     async def skip_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
