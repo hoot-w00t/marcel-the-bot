@@ -158,7 +158,7 @@ class MarcelMediaPlayer:
             ))
             self.timeout_loop.start()
 
-    def after_callback(self, error):
+    def after_callback(self, error: Exception = None):
         """Callback after a media has finished playing"""
 
         logging.info("after_callback for guild: {}".format(self.guild.id))
@@ -166,7 +166,10 @@ class MarcelMediaPlayer:
             logging.error("after_callback error for guild: {}: {}".format(self.guild.id, error))
 
         if self.autoplay:
-            self.loop.create_task(self.skip(autoplay=True))
+            if self.player_busy:
+                self.loop.create_task(self.skip(autoplay=True, delay=5.0))
+            else:
+                self.loop.create_task(self.skip(autoplay=True))
 
     def reset_timeout(self):
         self.last_action = time.time()
@@ -400,15 +403,6 @@ class MarcelMediaPlayer:
 
         self.set_previous_channel(channel)
 
-        if self.player_busy:
-            await self.previous_channel.send(
-                embed=embed_message(
-                    "The play requests are flowing too fast! Skipping this one",
-                    discord.Color.gold()
-                )
-            )
-            return
-
         pinfos = None
         if isinstance(request, PlayerInfo):
             pinfo = request
@@ -447,6 +441,13 @@ class MarcelMediaPlayer:
 
             pinfo = pinfos[0]
 
+            if len(pinfos) > 1:
+                await self.player_queue_add(
+                    pinfos[1:],
+                    channel=None,
+                    silent=silent
+                )
+
         if not self.is_in_voice_channel() and member:
             await self.join_member_voice_channel(member, self.previous_channel)
 
@@ -473,29 +474,40 @@ class MarcelMediaPlayer:
             self.after_callback(None)
             return
 
+        if self.player_busy:
+            if not silent:
+                await self.previous_channel.send(
+                    embed=pinfo.get_embed(
+                        "The play requests are flowing too fast! Skipping this one",
+                        discord.Color.gold()
+                    )
+                )
+            return
+
         self.player_busy = True # lock player
         try:
-            if self.is_media_playing():
-                # Always disable autplay before stopping to prevent the callback to play something else
-                self.autoplay = False
-                self.voice_client.stop()
+            async with self.previous_channel.typing():
+                if self.is_media_playing() or self.is_media_paused():
+                    # Always disable autoplay before stopping to prevent the callback to play something else
+                    self.autoplay = False
+                    self.voice_client.stop()
 
-            self.player_info = pinfo
+                self.player_info = pinfo
+                self.reset_timeout()
 
-            self.reset_timeout()
-            player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(
-                    pinfo.playback_url,
-                    options="-vn",
-                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if pinfo.is_http() else ""
-                ),
-                volume=self.player_volume
-            )
+                player = discord.PCMVolumeTransformer(
+                    discord.FFmpegPCMAudio(
+                        pinfo.playback_url,
+                        options="-vn",
+                        before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if pinfo.is_http() else ""
+                    ),
+                    volume=self.player_volume
+                )
 
-            self.voice_client.play(
-                player,
-                after=self.after_callback
-            )
+                self.voice_client.play(
+                    player,
+                    after=self.after_callback
+                )
 
             if not silent:
                 await self.previous_channel.send(
@@ -513,21 +525,21 @@ class MarcelMediaPlayer:
 
         self.player_busy = False # unlock player
 
-        if isinstance(pinfos, list):
-            if len(pinfos) > 1:
-                await self.player_queue_add(
-                    pinfos[1:],
-                    channel=None,
-                    silent=silent
-                )
-
     async def skip(
         self,
         channel: discord.TextChannel = None,
         silent: bool = False,
         autoplay: bool = False,
-        respect_duration_limit: bool = True):
+        respect_duration_limit: bool = True,
+        delay: float = None):
         """Skip current media and play the next in queue"""
+
+        if delay:
+            logging.warning("Skip delayed by {} seconds for guild: {}".format(
+                delay,
+                self.guild.id
+            ))
+            await asyncio.sleep(delay)
 
         self.set_previous_channel(channel)
 
