@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="marcel-the-bot",
-    version="3.2.3",
+    version="3.2.4",
     author="akrocynova",
     author_email="",
     description="Marcel the Discord Bot",

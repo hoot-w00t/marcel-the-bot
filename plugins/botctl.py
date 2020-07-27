@@ -31,10 +31,10 @@ class MarcelPlugin:
     """
 
     bot_commands = [
-        ("reload-all", "reload_all_cmd"),
-        ("reload", "reload_cmd"),
-        ("unload", "unload_cmd"),
-        ("save-settings", "save_settings_cmd")
+        ("reload-all", "reload_all_cmd", "clean_command"),
+        ("reload", "reload_cmd", "clean_command"),
+        ("unload", "unload_cmd", "clean_command"),
+        ("save-settings", "save_settings_cmd", "clean_command")
     ]
 
     def __init__(self, marcel: Marcel):
