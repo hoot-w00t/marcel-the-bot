@@ -41,7 +41,7 @@ class MarcelPlugin:
         self.marcel = marcel
 
     async def send_owner_only_message(self, channel: discord.TextChannel, settings: dict):
-        channel.send(
+        await channel.send(
             embed=embed_message(
                 self.plugin_name,
                 discord.Color.dark_red(),
