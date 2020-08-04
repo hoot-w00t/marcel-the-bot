@@ -483,8 +483,9 @@ class Marcel(discord.Client):
     async def on_ready(self) -> None:
         await self.load_owners()
 
-        logging.warning("Logged in as: {} ({})".format(
+        logging.warning("Logged in as: {}#{} ({})".format(
             self.user.name,
+            self.user.discriminator,
             self.user.id
         ))
 
@@ -492,10 +493,7 @@ class Marcel(discord.Client):
         for guild in self.guilds:
             guilds_str.append(guild.name)
 
-        logging.warning("Bot is in {} servers: {}".format(
-            len(self.guilds),
-            ", ".join(guilds_str)
-        ))
+        logging.warning("Bot is in {} servers".format(len(self.guilds)))
 
         for func in self.get_event_handler_functions("on_ready"):
             await func()
