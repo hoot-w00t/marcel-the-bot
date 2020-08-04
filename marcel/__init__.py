@@ -1,5 +1,5 @@
-from marcel.bot import *
-from marcel.program import *
+from marcel.bot import Marcel
+from marcel.voice import MarcelMediaPlayer, PlayerInfo
 
 """
     Marcel the Discord Bot

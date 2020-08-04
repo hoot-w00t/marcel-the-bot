@@ -1,4 +1,4 @@
-from marcel import main
+from marcel.program import main
 
 """
     Marcel the Discord Bot
