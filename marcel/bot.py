@@ -51,7 +51,7 @@ class Marcel(discord.Client):
         self.commands = dict()        # Commands' function handlers
         self.media_players = dict()   # Voice clients for each server
         self.event_handlers = dict()  # Bot events' function handlers
-        self.owners = None            # Bot owners
+        self.owners = list()          # Bot owners
 
         # Setup logging
         log_level_cfg = self.cfg.get("logging", dict()).get("level", "warning")
@@ -106,16 +106,23 @@ class Marcel(discord.Client):
 
         self.server_settings_default = self.cfg.get("server_default", dict())
 
-    def load_owners(self):
-        """Find bot owners"""
+    async def load_owners(self) -> None:
+        """Load bot owners from configuration and application owner"""
 
-        if self.owners == None:
-            self.owners = list()
-        else:
-            self.owners.clear()
+        self.owners.clear()
 
         for owner in self.cfg.get("owners", list()):
             self.owners.append(self.get_user(int(owner)))
+
+        appinfo = await self.application_info()
+
+        if not appinfo.owner in self.owners:
+            self.owners.append(appinfo.owner)
+            logging.warning("Automatically added bot owner to the owners list: {}#{} ({})".format(
+                appinfo.owner.name,
+                appinfo.owner.discriminator,
+                appinfo.owner.id
+            ))
 
     def load_plugin(self, filepath: Union[str, Path]) -> bool:
         """Load plugin
@@ -402,9 +409,6 @@ class Marcel(discord.Client):
     def is_member_owner(self, member: discord.Member):
         """Return True if member is an owner"""
 
-        if self.owners == None:
-            self.load_owners()
-
         for owner in self.owners:
             if member == owner:
                 return True
@@ -473,6 +477,8 @@ class Marcel(discord.Client):
             await func(message)
 
     async def on_ready(self):
+        await self.load_owners()
+
         logging.warning("Logged in as: {} ({})".format(
             self.user.name,
             self.user.id
