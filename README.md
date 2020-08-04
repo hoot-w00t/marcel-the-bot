@@ -166,6 +166,7 @@ The Rich Presence plugin reads its configuration from `rich_presence.json` at th
 Some variables will be dynamically replaced by their corresponding value when displayed:
 -   `{version}` will be replaced with the bot's version number (e.g. 3.2.0)
 -   `{plugin_count}` will be replaced with the number of loaded plugins
+-   `{server_count}` will be replaced with the number of servers the bot is in
 
 ### SoundBox
 The SoundBox plugin will read media files from a `soundbox` folder at the root of the configuration folder.

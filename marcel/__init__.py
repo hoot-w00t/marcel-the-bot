@@ -1,5 +1,5 @@
-from marcel.bot import *
-from marcel.program import *
+from marcel.bot import Marcel
+from marcel.voice import MarcelMediaPlayer, PlayerInfo
 
 """
     Marcel the Discord Bot
@@ -19,4 +19,4 @@ from marcel.program import *
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__version__ = "3.2.4"
+__version__ = "3.2.5"

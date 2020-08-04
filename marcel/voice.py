@@ -36,7 +36,7 @@ class PlayerInfo:
         duration: int = 0,
         url: str = None,
         playback_url: str = None,
-        found: bool = False):
+        found: bool = False) -> None:
         """Media player information"""
         self.title = title
         self.author = author
@@ -99,7 +99,7 @@ class MarcelMediaPlayer:
         player_queue_limit: int = 20,
         duration_limit: int = 1800,
         timeout_idle: int = 1800,
-        timeout_playing: int = 7200):
+        timeout_playing: int = 7200) -> None:
         """Marcel media player
         guild: discord.Guild() to which the media player belongs to
         volume: volume value (1.0 represents 100%)
@@ -128,7 +128,7 @@ class MarcelMediaPlayer:
         self.reset_timeout()
 
     @tasks.loop(seconds=15)
-    async def timeout_loop(self):
+    async def timeout_loop(self) -> None:
         if self.is_in_voice_channel():
             current_time = time.time()
 
@@ -148,7 +148,7 @@ class MarcelMediaPlayer:
             self.timeout_loop.stop()
 
     @timeout_loop.after_loop
-    async def after_timeout_loop(self):
+    async def after_timeout_loop(self) -> None:
         logging.info("timeout_loop ended for guild: {}".format(
             self.guild.id
         ))
@@ -159,7 +159,7 @@ class MarcelMediaPlayer:
             ))
             self.timeout_loop.start()
 
-    def after_callback(self, error: Exception = None):
+    def after_callback(self, error: Exception = None) -> None:
         """Callback after a media has finished playing"""
 
         logging.info("after_callback for guild: {}".format(self.guild.id))
@@ -172,31 +172,31 @@ class MarcelMediaPlayer:
             else:
                 self.loop.create_task(self.skip(autoplay=True))
 
-    def reset_timeout(self):
+    def reset_timeout(self) -> None:
         self.last_action = time.time()
 
-    def set_previous_channel(self, channel: discord.TextChannel):
+    def set_previous_channel(self, channel: discord.TextChannel) -> None:
         """Set previous_channel if needed"""
 
         if channel:
             self.previous_channel = channel
 
-    def is_in_voice_channel(self):
+    def is_in_voice_channel(self) -> bool:
         """Return True if voice client is connected to a voice channel"""
 
         return self.voice_client.is_connected() if isinstance(self.voice_client, discord.VoiceClient) else False
 
-    def is_media_playing(self):
+    def is_media_playing(self) -> bool:
         """Return True if media is currently playing"""
 
         return self.voice_client.is_playing() if self.is_in_voice_channel() else False
 
-    def is_media_paused(self):
+    def is_media_paused(self) -> bool:
         """Return True if media is currently paused"""
 
         return self.voice_client.is_paused() if self.is_in_voice_channel() else False
 
-    def ytdl_entry_to_playerinfo(self, entry: dict):
+    def ytdl_entry_to_playerinfo(self, entry: dict) -> PlayerInfo:
         """Parse Youtube-DL entry into PlayerInfo"""
 
         return PlayerInfo(
@@ -215,7 +215,7 @@ class MarcelMediaPlayer:
         as_playerinfo: bool = False,
         parse_all_entries: bool = False,
         with_playlists: bool = False,
-        playlistend: int = 0):
+        playlistend: int = 0) -> Union[PlayerInfo, list, dict]:
         """Fetch information about a given request using youtube-dl
         request: can either be a link or a text search
         Returns either a list or a PlayerInfo if as_playerinfo is True"""
@@ -261,7 +261,7 @@ class MarcelMediaPlayer:
             logging.error("ytdl_fetch: {}".format(e))
             return PlayerInfo() if as_playerinfo else dict()
 
-    async def send_nothing_playing(self):
+    async def send_nothing_playing(self) -> None:
         """Send a nothing is playing message to the previous channel"""
 
         await self.previous_channel.send(
@@ -271,7 +271,7 @@ class MarcelMediaPlayer:
                 )
             )
 
-    async def join_voice_channel(self, voice_channel: discord.VoiceChannel):
+    async def join_voice_channel(self, voice_channel: discord.VoiceChannel) -> None:
         """Join or move to a voice channel"""
 
         if self.is_in_voice_channel():
@@ -327,7 +327,7 @@ class MarcelMediaPlayer:
                     )
                 )
 
-    async def join_member_voice_channel(self, member: discord.Member, channel: discord.TextChannel = None):
+    async def join_member_voice_channel(self, member: discord.Member, channel: discord.TextChannel = None) -> None:
         """Join or move to the voice channel the member is in"""
 
         self.set_previous_channel(channel)
@@ -348,7 +348,11 @@ class MarcelMediaPlayer:
             logging.error("join_voice_channel: {}".format(e))
             await self.previous_channel.send("Unexpected error:\n```{}```".format(e))
 
-    async def leave_voice_channel(self, channel: discord.TextChannel = None, silent: bool = False, timed_out: bool = False):
+    async def leave_voice_channel(
+        self,
+        channel: discord.TextChannel = None,
+        silent: bool = False,
+        timed_out: bool = False) -> None:
         """Leave the connected voice channel"""
 
         self.set_previous_channel(channel)
@@ -358,6 +362,8 @@ class MarcelMediaPlayer:
                 if self.is_media_playing() or self.is_media_paused():
                     self.autoplay = False
                     self.voice_client.stop()
+
+                self.player_info.clear()
 
                 name = self.voice_client.channel.name
 
@@ -396,7 +402,7 @@ class MarcelMediaPlayer:
         silent: bool = False,
         autoplay: bool = False,
         respect_duration_limit: bool = True,
-        shuffle: bool = False):
+        shuffle: bool = False) -> None:
         """Play a media
         If request is not a PlayerInfo, it youtube-dl to fetch information
         silent: If True no messages will be sent to the previous text channel
@@ -535,7 +541,7 @@ class MarcelMediaPlayer:
         silent: bool = False,
         autoplay: bool = False,
         respect_duration_limit: bool = True,
-        delay: float = None):
+        delay: float = None) -> None:
         """Skip current media and play the next in queue"""
 
         if delay:
@@ -556,7 +562,7 @@ class MarcelMediaPlayer:
                     )
                 )
 
-            if autoplay:
+            if not self.is_media_playing() and not self.is_media_paused():
                 self.player_info.clear()
 
         else:
@@ -570,7 +576,7 @@ class MarcelMediaPlayer:
             )
             del self.player_queue[0]
 
-    async def stop(self, channel: discord.TextChannel = None, silent: bool = False):
+    async def stop(self, channel: discord.TextChannel = None, silent: bool = False) -> None:
         """Stop any currently playing media and disable autoplay"""
 
         self.set_previous_channel(channel)
@@ -593,7 +599,7 @@ class MarcelMediaPlayer:
             if not silent:
                 await self.send_nothing_playing()
 
-    async def pause(self, channel: discord.TextChannel = None, silent: bool = False):
+    async def pause(self, channel: discord.TextChannel = None, silent: bool = False) -> None:
         """Pause a playing media"""
 
         self.set_previous_channel(channel)
@@ -623,7 +629,7 @@ class MarcelMediaPlayer:
             if not silent:
                 await self.send_nothing_playing()
 
-    async def resume(self, channel: discord.TextChannel = None, silent: bool = False):
+    async def resume(self, channel: discord.TextChannel = None, silent: bool = False) -> None:
         """Resume a paused media"""
 
         self.set_previous_channel(channel)
@@ -658,7 +664,7 @@ class MarcelMediaPlayer:
         request: Union[str, list, PlayerInfo],
         channel: discord.TextChannel = None,
         silent: bool = False,
-        shuffle: bool = False):
+        shuffle: bool = False) -> None:
         """Add PlayerInfo or PlayerInfo list or request results (including playlists) to the player queue"""
 
         self.set_previous_channel(channel)
@@ -773,7 +779,7 @@ class MarcelMediaPlayer:
         if not silent:
             await self.previous_channel.send(embed=playlist_embed)
 
-    async def player_queue_clear(self, channel: discord.TextChannel, silent: bool = False):
+    async def player_queue_clear(self, channel: discord.TextChannel, silent: bool = False) -> None:
         """Clear player queue"""
 
         self.set_previous_channel(channel)
@@ -788,7 +794,7 @@ class MarcelMediaPlayer:
                 )
             )
 
-    async def player_queue_shuffle(self, channel: discord.TextChannel, silent: bool = False):
+    async def player_queue_shuffle(self, channel: discord.TextChannel, silent: bool = False) -> None:
         """Shuffle player queue"""
 
         self.set_previous_channel(channel)

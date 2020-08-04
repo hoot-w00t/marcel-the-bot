@@ -100,7 +100,8 @@ class MarcelPlugin:
                 activity=discord.Activity(
                     name=message.get("text").format(
                         version=__version__,
-                        plugin_count=len(self.marcel.plugins)
+                        plugin_count=len(self.marcel.plugins),
+                        server_count=len(self.marcel.guilds)
                     ),
                     type=message.get("type")
                 )

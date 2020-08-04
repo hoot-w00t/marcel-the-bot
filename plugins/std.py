@@ -27,11 +27,13 @@ class MarcelPlugin:
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """`{prefix}ping` pongs! :clap:
     `{prefix}version` displays the bot's version
-    `{prefix}help` shows you this message"""
+    `{prefix}help` shows you this message
+    `{prefix}invite-bot` generates an invitation to add me on your server"""
 
     bot_commands = [
         ("ping", "ping_cmd", "clean_command"),
         ("version", "version_cmd"),
+        ("invite-bot", "invite_bot_cmd", "clean_command"),
         ("help", "help_cmd", "clean_command")
     ]
 
@@ -58,6 +60,27 @@ class MarcelPlugin:
                 discord.Color.blue(),
                 "version {}".format(__version__)
             )
+        )
+
+    async def invite_bot_cmd(self, message: discord.Message, args: list, **kwargs):
+        appinfo = await self.marcel.application_info()
+
+        invite_url = discord.utils.oauth_url(
+            appinfo.id,
+            discord.Permissions.all()
+        )
+
+        embed = discord.Embed(
+            title="Add me on your server",
+            description="Click the link above to invite me on your server",
+            url=invite_url,
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=str(self.marcel.user.avatar_url))
+
+        await message.channel.send(
+            embed=embed,
+            delete_after=kwargs.get("settings").get("delete_after")
         )
 
     async def get_plugin_help(self, plugin_name: str, prefix: str):

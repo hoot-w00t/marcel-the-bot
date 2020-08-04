@@ -32,7 +32,7 @@ import datetime
 """
 
 class Marcel(discord.Client):
-    def __init__(self, cfg_path: Union[str, Path], plugins_path: Union[str, Path]):
+    def __init__(self, cfg_path: Union[str, Path], plugins_path: Union[str, Path]) -> None:
         # Expand cfg_path (bot root folder)
         if isinstance(cfg_path, Path):
             self.cfg_path = cfg_path
@@ -51,7 +51,7 @@ class Marcel(discord.Client):
         self.commands = dict()        # Commands' function handlers
         self.media_players = dict()   # Voice clients for each server
         self.event_handlers = dict()  # Bot events' function handlers
-        self.owners = None            # Bot owners
+        self.owners = list()          # Bot owners
 
         # Setup logging
         log_level_cfg = self.cfg.get("logging", dict()).get("level", "warning")
@@ -90,7 +90,7 @@ class Marcel(discord.Client):
         # Load plugins
         self.load_plugins()
 
-    def run(self):
+    def run(self) -> None:
         """Run the bot (blocking)"""
 
         super(Marcel, self).run(
@@ -98,7 +98,7 @@ class Marcel(discord.Client):
         )
         self.save_server_settings()
 
-    def load_cfg(self):
+    def load_cfg(self) -> None:
         """Load bot configuration from config.json"""
 
         with self.cfg_file.open("r") as h:
@@ -106,16 +106,23 @@ class Marcel(discord.Client):
 
         self.server_settings_default = self.cfg.get("server_default", dict())
 
-    def load_owners(self):
-        """Find bot owners"""
+    async def load_owners(self) -> None:
+        """Load bot owners from configuration and application owner"""
 
-        if self.owners == None:
-            self.owners = list()
-        else:
-            self.owners.clear()
+        self.owners.clear()
 
         for owner in self.cfg.get("owners", list()):
             self.owners.append(self.get_user(int(owner)))
+
+        appinfo = await self.application_info()
+
+        if not appinfo.owner in self.owners:
+            self.owners.append(appinfo.owner)
+            logging.warning("Automatically added bot owner to the owners list: {}#{} ({})".format(
+                appinfo.owner.name,
+                appinfo.owner.discriminator,
+                appinfo.owner.id
+            ))
 
     def load_plugin(self, filepath: Union[str, Path]) -> bool:
         """Load plugin
@@ -280,7 +287,7 @@ class Marcel(discord.Client):
 
         return None
 
-    def get_event_handler_functions(self, event_name: str):
+    def get_event_handler_functions(self, event_name: str) -> list:
         """Return a list of handler functions for event_name"""
 
         funcs = list()
@@ -295,7 +302,11 @@ class Marcel(discord.Client):
 
         return funcs
 
-    def register_event_handler(self, plugin: Union[str, object], event_name: str, function_name: str):
+    def register_event_handler(
+        self,
+        plugin: Union[str, object],
+        event_name: str,
+        function_name: str) -> None:
         """Register function_name from plugin for event_name
         plugin can be the plugin name (str) or the class object (self, if called from the plugin)"""
 
@@ -317,9 +328,11 @@ class Marcel(discord.Client):
             "function_name": function_name,
         })
 
-        return True
-
-    def unregister_event_handler(self, plugin: Union[str, object], event_name: str, function_name: str = None):
+    def unregister_event_handler(
+        self,
+        plugin: Union[str, object],
+        event_name: str,
+        function_name: str = None) -> None:
         """Unregister function_name from plugin for event_name
         plugin can be the plugin name (str) or the class object (self, if called from the plugin)
         If function_name is None all registered functions for the plugin will be unregistered"""
@@ -339,9 +352,7 @@ class Marcel(discord.Client):
                     if function_name == None or handler["function_name"] == function_name:
                         self.event_handlers[event_name].remove(handler)
 
-        return True
-
-    def load_server_settings(self):
+    def load_server_settings(self) -> None:
         """Load server settings from servers.json"""
 
         if self.servers_file.exists():
@@ -355,7 +366,7 @@ class Marcel(discord.Client):
 
         self.server_settings_diff = self.server_settings.copy()
 
-    def save_server_settings(self):
+    def save_server_settings(self) -> None:
         """Save server settings to servers.json"""
 
         logging.info("Saving server settings to {}".format(self.servers_file))
@@ -399,11 +410,8 @@ class Marcel(discord.Client):
 
         return self.media_players.get(guild_id)
 
-    def is_member_owner(self, member: discord.Member):
+    def is_member_owner(self, member: discord.Member) -> bool:
         """Return True if member is an owner"""
-
-        if self.owners == None:
-            self.load_owners()
 
         for owner in self.owners:
             if member == owner:
@@ -411,17 +419,17 @@ class Marcel(discord.Client):
 
         return False
 
-    def is_member_admin(self, member: discord.Member):
+    def is_member_admin(self, member: discord.Member) -> bool:
         """Return True if member is a bot administrator"""
 
         return self.is_member_owner(member) or member.guild_permissions.administrator
 
-    def is_me(self, member: discord.Member):
+    def is_me(self, member: discord.Member) -> bool:
         """Return True if member is the bot user"""
 
         return member == self.user
 
-    async def clean_command(self, message: discord.Message):
+    async def clean_command(self, message: discord.Message) -> None:
         """Delete a bot command if 'clean_command' attribute is set"""
 
         try:
@@ -436,7 +444,7 @@ class Marcel(discord.Client):
                 )
             )
 
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if not (self.is_me(message.author) or not isinstance(message.channel, discord.abc.GuildChannel)):
             guild_settings = self.get_server_settings(message.guild)
             prefix = guild_settings.get("prefix", "!!")
@@ -472,7 +480,9 @@ class Marcel(discord.Client):
         for func in self.get_event_handler_functions("on_message"):
             await func(message)
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        await self.load_owners()
+
         logging.warning("Logged in as: {} ({})".format(
             self.user.name,
             self.user.id
@@ -490,50 +500,54 @@ class Marcel(discord.Client):
         for func in self.get_event_handler_functions("on_ready"):
             await func()
 
-    async def on_connect(self):
+    async def on_connect(self) -> None:
         for func in self.get_event_handler_functions("on_connect"):
             await func()
 
-    async def on_disconnect(self):
+    async def on_disconnect(self) -> None:
         for func in self.get_event_handler_functions("on_disconnect"):
             await func()
 
-    async def on_resumed(self):
+    async def on_resumed(self) -> None:
         for func in self.get_event_handler_functions("on_resumed"):
             await func()
 
-    async def on_typing(self, channel: discord.abc.Messageable, user: Union[discord.User, discord.Member], when: datetime.datetime):
+    async def on_typing(
+        self,
+        channel: discord.abc.Messageable,
+        user: Union[discord.User, discord.Member],
+        when: datetime.datetime) -> None:
         for func in self.get_event_handler_functions("on_typing"):
             await func(channel, user, when)
 
-    async def on_message_delete(self, message: discord.Message):
+    async def on_message_delete(self, message: discord.Message) -> None:
         for func in self.get_event_handler_functions("on_message_delete"):
             await func(message)
 
-    async def on_reaction_add(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]):
+    async def on_reaction_add(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> None:
         for func in self.get_event_handler_functions("on_reaction_add"):
             await func(reaction, user)
 
-    async def on_reaction_remove(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]):
+    async def on_reaction_remove(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> None:
         for func in self.get_event_handler_functions("on_reaction_remove"):
             await func(reaction, user)
 
-    async def on_member_join(self, member: discord.Member):
+    async def on_member_join(self, member: discord.Member) -> None:
         for func in self.get_event_handler_functions("on_member_join"):
             await func(member)
 
-    async def on_member_remove(self, member: discord.Member):
+    async def on_member_remove(self, member: discord.Member) -> None:
         for func in self.get_event_handler_functions("on_member_remove"):
             await func(member)
 
-    async def on_member_update(self, before: discord.Member, after: discord.Member):
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
         for func in self.get_event_handler_functions("on_member_update"):
             await func(before, after)
 
-    async def on_guild_join(self, guild: discord.Guild):
+    async def on_guild_join(self, guild: discord.Guild) -> None:
         for func in self.get_event_handler_functions("on_guild_join"):
             await func(guild)
 
-    async def on_guild_remove(self, guild: discord.guild):
+    async def on_guild_remove(self, guild: discord.guild) -> None:
         for func in self.get_event_handler_functions("on_guild_remove"):
             await func(guild)

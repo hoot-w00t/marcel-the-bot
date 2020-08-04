@@ -28,20 +28,22 @@ class MarcelPlugin:
     `{prefix}reload` [plugin] reload given plugin (or try to load unloaded plugins if no name is given)
     `{prefix}unload` [plugin] unload given plugin
     `{prefix}save-settings` save server settings
+    `{prefix}server-list` get the list of servers the bot is in
     """
 
     bot_commands = [
         ("reload-all", "reload_all_cmd", "clean_command"),
         ("reload", "reload_cmd", "clean_command"),
         ("unload", "unload_cmd", "clean_command"),
-        ("save-settings", "save_settings_cmd", "clean_command")
+        ("save-settings", "save_settings_cmd", "clean_command"),
+        ("server-list", "server_list_cmd", "clean_command")
     ]
 
     def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
     async def send_owner_only_message(self, channel: discord.TextChannel, settings: dict):
-        channel.send(
+        await channel.send(
             embed=embed_message(
                 self.plugin_name,
                 discord.Color.dark_red(),
@@ -201,3 +203,33 @@ class MarcelPlugin:
                 ),
                 delete_after=kwargs.get("settings").get("delete_after")
             )
+
+    async def server_list_cmd(self, message: discord.Message, args: list, **kwargs):
+        if not self.marcel.is_member_owner(message.author):
+            await self.send_owner_only_message(message.channel, kwargs.get("settings"))
+            return
+
+        server_list = list()
+        server_count = 0
+        total_members = 0
+
+        for guild in self.marcel.guilds:
+            server_list.append(
+                "{}{} ({} members)".format(
+                    guild.name,
+                    ": {}".format(guild.description) if guild.description else "",
+                    guild.member_count
+                )
+            )
+
+            total_members += guild.member_count
+            server_count += 1
+
+        await message.channel.send(
+            "Bot is in {} servers ({} members)\n```\n{}\n```".format(
+                server_count,
+                total_members,
+                "\n".join(server_list)
+            ),
+            delete_after=kwargs.get("settings").get("delete_after")
+        )
