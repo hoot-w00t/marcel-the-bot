@@ -359,6 +359,8 @@ class MarcelMediaPlayer:
                     self.autoplay = False
                     self.voice_client.stop()
 
+                self.player_info.clear()
+
                 name = self.voice_client.channel.name
 
                 await self.voice_client.disconnect()
@@ -556,7 +558,7 @@ class MarcelMediaPlayer:
                     )
                 )
 
-            if autoplay:
+            if not self.is_media_playing() and not self.is_media_paused():
                 self.player_info.clear()
 
         else:
