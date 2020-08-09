@@ -1,4 +1,6 @@
 # Marcel the Bot
+![License](https://img.shields.io/github/license/hoot-w00t/marcel-the-bot?style=flat-square) ![Python Version](https://img.shields.io/pypi/pyversions/marcel-the-bot?style=flat-square) [![PyPI](https://img.shields.io/pypi/v/marcel-the-bot?style=flat-square)](https://pypi.org/project/marcel-the-bot/)
+
 ## What is it?
 Marcel is a  plugin-based Discord bot. It uses [discord.py](https://github.com/Rapptz/discord.py/) to interact with Discord.
 
