@@ -97,13 +97,21 @@ class MarcelPlugin:
         request = " ".join(args).strip()
 
         if len(request) > 0:
-            await mp.play(
-                request,
-                channel=message.channel,
-                member=message.author,
-                autoplay=True,
-                shuffle=True
-            )
+            if mp.is_media_playing() or mp.is_media_paused():
+                await mp.player_queue_add(
+                    request,
+                    channel=message.channel,
+                    shuffle=True
+                )
+
+            else:
+                await mp.play(
+                    request,
+                    channel=message.channel,
+                    member=message.author,
+                    autoplay=True,
+                    shuffle=True
+                )
 
         else:
             await mp.player_queue_shuffle(channel=message.channel)
