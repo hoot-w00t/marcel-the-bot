@@ -36,7 +36,8 @@ class PlayerInfo:
         duration: int = 0,
         url: str = None,
         playback_url: str = None,
-        found: bool = False) -> None:
+        found: bool = False,
+        from_ytdl: bool = False) -> None:
         """Media player information"""
         self.title = title
         self.author = author
@@ -54,6 +55,11 @@ class PlayerInfo:
         self.url = url
         self.playback_url = playback_url
         self.found = found
+
+        # This indicates the Media Player that the PlayerInfo was extracted from youtube-dl
+        # The Media Player will fetch the regular URL using youtube-dl right before playing it
+        # to fix an issue where the extracted playback URLs expire after some time
+        self.from_ytdl = from_ytdl
 
     def clear(self) -> None:
         self.title = None
@@ -206,7 +212,8 @@ class MarcelMediaPlayer:
             duration=entry.get("duration"),
             url=entry.get("webpage_url"),
             playback_url=entry.get("url"),
-            found=True if entry.get("url") else False
+            found=True if entry.get("url") else False,
+            from_ytdl=True
         )
 
     async def ytdl_fetch(
@@ -458,6 +465,13 @@ class MarcelMediaPlayer:
                     shuffle=shuffle
                 )
 
+            else:
+                # If there is only one result, don't refresh the playback URLs
+                # We don't disable the refresh if there are multiple results
+                # because grabbing multiple results can take some time and the
+                # playback URL can expire
+                pinfo.from_ytdl = False
+
         if not self.is_in_voice_channel() and member:
             await self.join_member_voice_channel(member, self.previous_channel)
 
@@ -501,6 +515,13 @@ class MarcelMediaPlayer:
                     # Always disable autoplay before stopping to prevent the callback to play something else
                     self.autoplay = False
                     self.voice_client.stop()
+
+                if pinfo.from_ytdl:
+                    # Always refresh the playback URL when fetched from youtube-dl to prevent expired URLs
+                    pinfo = await self.ytdl_fetch(
+                        pinfo.url,
+                        as_playerinfo=True
+                    )
 
                 self.player_info = pinfo
                 self.reset_timeout()
