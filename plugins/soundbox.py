@@ -67,25 +67,49 @@ class MarcelPlugin:
         )
 
     async def list_sounds(self, message: discord.Message, args: list, **kwargs):
-        if len(self.sounds) == 0:
+        sound_count = len(self.sounds)
+
+        if sound_count == 0:
             await self.send_empty_soundbox(message.channel)
             return
 
-        count = len(self.sounds)
-        sounds = list()
-        for sound in self.sounds:
-            sounds.append(sound.name[:len(sound.name) - len(sound.suffix)])
+        part = 1
+        total_parts = (sound_count // 20) + 1
+        count = 0
 
-        await message.channel.send(
-            embed=embed_message(
-                "{} sound{} loaded".format(
-                    count if count > 0 else "No",
-                    "s" if count != 1 else ""
-                ),
-                discord.Color.blue(),
-                message=", ".join(sounds)
+        embed = discord.Embed(color=discord.Color.blue())
+        if total_parts > 1:
+            embed.set_author(name="Soundbox sounds ({} sounds, {}/{})".format(
+                sound_count,
+                part,
+                total_parts
+            ))
+        else:
+            embed.set_author(name="Soundbox sounds ({} sounds)".format(
+                sound_count
+            ))
+
+        for sound in self.sounds:
+            embed.add_field(
+                name=sound.name[:len(sound.name) - len(sound.suffix)],
+                value=sound.suffix[1:],
+                inline=True
             )
-        )
+            count += 1
+
+            if count >= 20:
+                await message.channel.send(embed=embed)
+
+                count = 0
+                embed.clear_fields()
+                part += 1
+                embed.set_author(name="Soundbox sounds ({}/{})".format(
+                    part,
+                    total_parts
+                ))
+
+        if count > 0:
+            await message.channel.send(embed=embed)
 
     async def play_sound(self, message: discord.Message, sound: Path):
         mp = self.marcel.get_server_mediaplayer(message.guild)
