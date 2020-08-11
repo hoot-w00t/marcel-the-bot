@@ -455,6 +455,9 @@ class MarcelMediaPlayer:
                     )
                 return
 
+            if shuffle:
+                random.shuffle(pinfos)
+
             pinfo = pinfos[0]
 
             if len(pinfos) > 1:
@@ -462,7 +465,7 @@ class MarcelMediaPlayer:
                     pinfos[1:],
                     channel=None,
                     silent=silent,
-                    shuffle=shuffle
+                    shuffle=False
                 )
 
             else:
