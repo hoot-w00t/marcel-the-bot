@@ -19,4 +19,4 @@ from marcel.voice import MarcelMediaPlayer, PlayerInfo
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__version__ = "3.2.5"
+__version__ = "3.2.6"
