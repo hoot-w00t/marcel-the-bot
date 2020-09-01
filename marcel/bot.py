@@ -521,6 +521,10 @@ class Marcel(discord.Client):
         for func in self.get_event_handler_functions("on_message_delete"):
             await func(message)
 
+    async def on_bulk_message_delete(self, messages: list) -> None:
+        for func in self.get_event_handler_functions("on_bulk_message_delete"):
+            await func(messages)
+
     async def on_reaction_add(self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]) -> None:
         for func in self.get_event_handler_functions("on_reaction_add"):
             await func(reaction, user)
