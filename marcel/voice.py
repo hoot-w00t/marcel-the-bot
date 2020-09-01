@@ -142,13 +142,13 @@ class MarcelMediaPlayer:
             if self.is_media_playing():
                 if current_time - self.last_action > self.timeout_playing:
                     logging.info("Playing Timeout reached for guild: {}".format(self.guild.id))
-                    await self.leave_voice_channel(timed_out=True)
+                    await self.leave_voice_channel(reason="due to inactivity")
                     self.timeout_loop.stop()
 
             else:
                 if current_time - self.last_action > self.timeout_idle:
                     logging.info("Idle Timeout reached for guild: {}".format(self.guild.id))
-                    await self.leave_voice_channel(timed_out=True)
+                    await self.leave_voice_channel(reason="due to inactivity")
                     self.timeout_loop.stop()
 
         else:
@@ -403,7 +403,7 @@ class MarcelMediaPlayer:
         self,
         channel: discord.TextChannel = None,
         silent: bool = False,
-        timed_out: bool = False) -> None:
+        reason: str = None) -> None:
         """Leave the connected voice channel"""
 
         self.set_previous_channel(channel)
@@ -424,7 +424,7 @@ class MarcelMediaPlayer:
                     await self.previous_channel.send(
                         embed=embed_message(
                             "Left voice channel{}".format(
-                                " (due to inactivity)" if timed_out else ""
+                                " ({})".format(reason) if reason else ""
                             ),
                             discord.Color.red(),
                             name
