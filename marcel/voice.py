@@ -158,8 +158,8 @@ class MarcelMediaPlayer:
     @inactivity_loop.after_loop
     async def inactivity_loop_after(self) -> None:
         if self.is_in_voice_channel():
-            logging.critical("Inactivity loop stopped but voice is still connected, restarting (guild: {})".format(self.guild.id))
-            self.inactivity_loop.start()
+            logging.critical("Inactivity loop stopped but voice is still connected (guild: {})".format(self.guild.id))
+            await self.leave_voice_channel(reason="unexpected error")
 
     def after_callback(self, error: Exception = None) -> None:
         """Callback after a media has finished playing"""
@@ -412,8 +412,6 @@ class MarcelMediaPlayer:
                 self.player_info.clear()
                 name = self.voice_client.channel.name
                 await self.voice_client.disconnect()
-
-                self.inactivity_loop.stop()
 
                 if not silent:
                     await self.previous_channel.send(
