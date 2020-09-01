@@ -130,6 +130,7 @@ class MarcelMediaPlayer:
         self.player_queue = list()
 
         self.loop = asyncio.get_event_loop()
+        self.connect_timeout = 10.0
 
         self.reset_timeout()
 
@@ -278,8 +279,32 @@ class MarcelMediaPlayer:
                 )
             )
 
+    async def change_voice_state(self, self_mute: bool = False, self_deaf: bool = False) -> None:
+        if self.is_in_voice_channel():
+            await self.guild.change_voice_state(
+                channel=self.voice_client.channel,
+                self_mute=self_mute,
+                self_deaf=self_deaf
+            )
+
+    async def _move_to(self, voice_channel: discord.VoiceChannel) -> None:
+        await self.voice_client.move_to(voice_channel)
+
+        while not self.voice_client.channel == voice_channel:
+            await asyncio.sleep(0.1)
+
     async def join_voice_channel(self, voice_channel: discord.VoiceChannel) -> None:
         """Join or move to a voice channel"""
+
+        if not voice_channel.permissions_for(self.guild.me).connect:
+            await self.previous_channel.send(
+                embed=embed_message(
+                    "I do not have permission to join voice channel",
+                    discord.Color.dark_red(),
+                    message=voice_channel.name
+                )
+            )
+            return
 
         if self.is_in_voice_channel():
             if self.voice_client.channel == voice_channel:
@@ -289,10 +314,12 @@ class MarcelMediaPlayer:
                         discord.Color.dark_red()
                     )
                 )
+                return
 
-            else:
-                self.reset_timeout()
-                await self.voice_client.move_to(voice_channel)
+            self.reset_timeout()
+            try:
+                await asyncio.wait_for(self._move_to(voice_channel), self.connect_timeout)
+                await self.change_voice_state(self_deaf=True)
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -302,10 +329,27 @@ class MarcelMediaPlayer:
                     )
                 )
 
+            except Exception as e:
+                logging.error("Unable to move to voice channel for guild: {}: {}".format(
+                    self.guild.id,
+                    e
+                ))
+                await self.previous_channel.send(
+                    embed=embed_message(
+                        "I cannot move to voice channel",
+                        discord.Color.dark_red(),
+                        message=voice_channel.name
+                    )
+                )
+
         else:
+            self.reset_timeout()
             try:
-                self.reset_timeout()
-                self.voice_client = await voice_channel.connect(timeout=10, reconnect=False)
+                self.voice_client = await voice_channel.connect(
+                    timeout=self.connect_timeout,
+                    reconnect=False
+                )
+                await self.change_voice_state(self_deaf=True)
 
                 try:
                     self.timeout_loop.start()
