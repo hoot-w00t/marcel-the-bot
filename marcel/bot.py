@@ -3,9 +3,7 @@ from marcel.util import embed_message
 from pathlib import Path
 from typing import Union
 from importlib import machinery
-from discord.ext import tasks
 import os
-import re
 import json
 import logging
 import discord
