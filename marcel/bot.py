@@ -549,3 +549,7 @@ class Marcel(discord.Client):
     async def on_guild_remove(self, guild: discord.guild) -> None:
         for func in self.get_event_handler_functions("on_guild_remove"):
             await func(guild)
+
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+        for func in self.get_event_handler_functions("on_voice_state_update"):
+            await func(member, before, after)
