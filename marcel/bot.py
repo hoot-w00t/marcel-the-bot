@@ -588,3 +588,11 @@ class Marcel(discord.Client):
     async def on_member_unban(self, guild: discord.Guild, user: discord.User) -> None:
         for func in self.get_event_handler_functions("on_member_unban"):
             await func(guild, user)
+
+    async def on_invite_create(self, invite: discord.Invite) -> None:
+        for func in self.get_event_handler_functions("on_invite_create"):
+            await func(invite)
+
+    async def on_invite_delete(self, invite: discord.Invite) -> None:
+        for func in self.get_event_handler_functions("on_invite_delete"):
+            await func(invite)
