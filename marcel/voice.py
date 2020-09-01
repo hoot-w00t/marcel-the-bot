@@ -212,7 +212,6 @@ class MarcelMediaPlayer:
         self,
         request: str,
         as_playerinfo: bool = False,
-        parse_all_entries: bool = False,
         with_playlists: bool = False,
         playlistend: int = 0) -> Union[PlayerInfo, list, dict]:
         """Fetch information about a given request using youtube-dl
@@ -248,7 +247,7 @@ class MarcelMediaPlayer:
 
                 if len(entries) == 0:
                     return PlayerInfo()
-                elif parse_all_entries:
+                elif with_playlists:
                     return [self.ytdl_entry_to_playerinfo(x) for x in entries]
                 else:
                     return self.ytdl_entry_to_playerinfo(entries[0])
@@ -473,7 +472,6 @@ class MarcelMediaPlayer:
                 pinfos = await self.ytdl_fetch(
                     request,
                     as_playerinfo=True,
-                    parse_all_entries=True,
                     with_playlists=True
                 )
 
@@ -748,7 +746,6 @@ class MarcelMediaPlayer:
                     pinfos = await self.ytdl_fetch(
                         request,
                         as_playerinfo=True,
-                        parse_all_entries=True,
                         with_playlists=True
                     )
 
