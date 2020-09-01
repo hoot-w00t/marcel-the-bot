@@ -240,7 +240,25 @@ class MarcelMediaPlayer:
 
             with youtube_dl.YoutubeDL(params=ytdl_opts) as ytdl:
                 await self.loop.run_in_executor(None, ytdl.cache.remove)
-                info = await self.loop.run_in_executor(None, lambda: ytdl.extract_info(url=request, download=False))
+
+                try:
+                    info = await asyncio.wait_for(
+                        self.loop.run_in_executor(
+                            None,
+                            lambda: ytdl.extract_info(
+                                url=request,
+                                download=False
+                        )),
+                        timeout=300.0
+                    )
+
+                except asyncio.TimeoutError:
+                    logging.error("ytdl_fetch timed out for guild: {}: {}".format(
+                        self.guild.id,
+                        request
+                    ))
+
+                    info = dict(entries=list())
 
             if as_playerinfo:
                 entries = info.get("entries", [info])
