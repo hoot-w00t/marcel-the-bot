@@ -133,7 +133,7 @@ class MarcelMediaPlayer:
         self.connect_timeout = 10.0
         self.last_active = time.time()
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=30)
     async def inactivity_loop(self) -> None:
         if self.is_in_voice_channel():
             if self.is_media_playing():
@@ -146,7 +146,6 @@ class MarcelMediaPlayer:
             for member in self.voice_client.channel.members:
                 if member == self.guild.me:
                     continue
-
                 if not member.voice.afk:
                     return
 
