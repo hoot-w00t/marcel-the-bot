@@ -580,3 +580,11 @@ class Marcel(discord.Client):
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
         for func in self.get_event_handler_functions("on_voice_state_update"):
             await func(member, before, after)
+
+    async def on_member_ban(self, guild: discord.Guild, user: Union[discord.User, discord.Member]) -> None:
+        for func in self.get_event_handler_functions("on_member_ban"):
+            await func(guild, user)
+
+    async def on_member_unban(self, guild: discord.Guild, user: discord.User) -> None:
+        for func in self.get_event_handler_functions("on_member_unban"):
+            await func(guild, user)
