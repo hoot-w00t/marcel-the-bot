@@ -431,17 +431,21 @@ class Marcel(discord.Client):
     async def clean_command(self, message: discord.Message) -> None:
         """Delete a bot command if 'clean_command' attribute is set"""
 
-        try:
-            await message.delete()
-
-        except:
+        if not message.channel.permissions_for(message.guild.me).manage_messages:
             await message.channel.send(
                 embed=embed_message(
                     "Command cleanup",
                     discord.Color.gold(),
                     message="I need the 'Manage messages' permission in order to clean commands"
-                )
+                ),
+                delete_after=10.0
             )
+            return
+
+        try:
+            await message.delete()
+        except:
+            pass
 
     async def on_message(self, message: discord.Message) -> None:
         if not (self.is_me(message.author) or not isinstance(message.channel, discord.abc.GuildChannel)):
