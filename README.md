@@ -43,8 +43,7 @@ Here's a configuration template (which you can find in the `templates` folder):
         "level": "warning"
     },
     "voice_client": {
-        "timeout_idle": 1800,
-        "timeout_playing": 7200,
+        "idle_limit": 1800,
         "player_queue_limit": 20,
         "duration_limit": 1800
     },
@@ -62,8 +61,7 @@ Here's a configuration template (which you can find in the `templates` folder):
 -   `logging` defines how the bot should log information
     -   `level` is the logging level, by default it is set to `warning`
 -   `voice_client` defines the voice client's behavior
-    -   `timeout_idle` is the idle time (in seconds) before the voice client is automatically disconnected
-    -   `timeout_playing` is the idle time while a media is playing (in seconds) before the voice client is automatically disconnected
+    -   `idle_limit` is the idle time (in seconds) before the voice client is automatically disconnected
     -   `player_queue_limit` is the maximum amount of medias that the player queue will accept
     -   `duration_limit` is the maximum duration of a media (in seconds)
 -   `server_defaults` are the default settings for the Discord servers (each plugin can store its own settings too)

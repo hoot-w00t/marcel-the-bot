@@ -104,23 +104,23 @@ class MarcelMediaPlayer:
         volume_limit: float = 1.25,
         player_queue_limit: int = 20,
         duration_limit: int = 1800,
-        timeout_idle: int = 1800,
-        timeout_playing: int = 7200) -> None:
+        idle_limit: int = 0) -> None:
         """Marcel media player
         guild: discord.Guild() to which the media player belongs to
         volume: volume value (1.0 represents 100%)
         volume_limit: maximum volume value (1.0 represents 125%)
         player_queue_limit: maximum size of the player queue
         duration_limit: maximum requested media duration (in seconds)
-        timeout_idle: seconds of idle before timing out
-        timeout_playing: seconds of idle while playing a media before timing out"""
+        idle_limit: time (in seconds) of inactivity after which the bot will
+                    automatically disconnect from the voice channel
+                    (0 to disable)
+        """
         self.guild = guild
         self.player_volume = volume
         self.player_volume_limit = volume_limit
         self.player_queue_limit = player_queue_limit
         self.duration_limit = duration_limit
-        self.timeout_idle = timeout_idle
-        self.timeout_playing = timeout_playing
+        self.idle_limit = idle_limit
 
         self.voice_client = None
         self.autoplay = False
@@ -131,40 +131,35 @@ class MarcelMediaPlayer:
 
         self.loop = asyncio.get_event_loop()
         self.connect_timeout = 10.0
+        self.last_active = time.time()
 
-        self.reset_timeout()
-
-    @tasks.loop(seconds=15)
-    async def timeout_loop(self) -> None:
+    @tasks.loop(seconds=10)
+    async def inactivity_loop(self) -> None:
         if self.is_in_voice_channel():
-            current_time = time.time()
-
             if self.is_media_playing():
-                if current_time - self.last_action > self.timeout_playing:
-                    logging.info("Playing Timeout reached for guild: {}".format(self.guild.id))
-                    await self.leave_voice_channel(reason="due to inactivity")
-                    self.timeout_loop.stop()
+                self.last_active = time.time()
 
-            else:
-                if current_time - self.last_action > self.timeout_idle:
-                    logging.info("Idle Timeout reached for guild: {}".format(self.guild.id))
-                    await self.leave_voice_channel(reason="due to inactivity")
-                    self.timeout_loop.stop()
+            elif self.idle_limit > 0 and time.time() - self.last_active >= self.idle_limit:
+                await self.leave_voice_channel(reason="inactive for a while")
+                return
+
+            for member in self.voice_client.channel.members:
+                if member == self.guild.me:
+                    continue
+
+                if not member.voice.afk:
+                    return
+
+            await self.leave_voice_channel(reason="bot is alone")
 
         else:
-            self.timeout_loop.stop()
+            self.inactivity_loop.stop()
 
-    @timeout_loop.after_loop
-    async def after_timeout_loop(self) -> None:
-        logging.info("timeout_loop ended for guild: {}".format(
-            self.guild.id
-        ))
-
+    @inactivity_loop.after_loop
+    async def inactivity_loop_after(self) -> None:
         if self.is_in_voice_channel():
-            logging.error("timeout_loop ended for guild: {}: but voice client is still connected, trying to start it back".format(
-                self.guild.id
-            ))
-            self.timeout_loop.start()
+            logging.critical("Inactivity loop stopped but voice is still connected, restarting (guild: {})".format(self.guild.id))
+            self.inactivity_loop.start()
 
     def after_callback(self, error: Exception = None) -> None:
         """Callback after a media has finished playing"""
@@ -178,9 +173,6 @@ class MarcelMediaPlayer:
                 self.loop.create_task(self.skip(autoplay=True, delay=5.0))
             else:
                 self.loop.create_task(self.skip(autoplay=True))
-
-    def reset_timeout(self) -> None:
-        self.last_action = time.time()
 
     def set_previous_channel(self, channel: discord.TextChannel) -> None:
         """Set previous_channel if needed"""
@@ -316,11 +308,11 @@ class MarcelMediaPlayer:
                 )
                 return
 
-            self.reset_timeout()
             try:
                 await asyncio.wait_for(self._move_to(voice_channel), self.connect_timeout)
                 await self.change_voice_state(self_deaf=True)
 
+                self.last_active = time.time()
                 await self.previous_channel.send(
                     embed=embed_message(
                         "I moved over to",
@@ -343,7 +335,6 @@ class MarcelMediaPlayer:
                 )
 
         else:
-            self.reset_timeout()
             try:
                 self.voice_client = await voice_channel.connect(
                     timeout=self.connect_timeout,
@@ -351,11 +342,15 @@ class MarcelMediaPlayer:
                 )
                 await self.change_voice_state(self_deaf=True)
 
+                self.last_active = time.time()
                 try:
-                    self.timeout_loop.start()
+                    self.inactivity_loop.start()
 
-                except:
-                    pass
+                except Exception as e:
+                    logging.error("Cannot start inactivity loop for guild: {}: {}".format(
+                        self.guild.id,
+                        e
+                    ))
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -415,10 +410,10 @@ class MarcelMediaPlayer:
                     self.voice_client.stop()
 
                 self.player_info.clear()
-
                 name = self.voice_client.channel.name
-
                 await self.voice_client.disconnect()
+
+                self.inactivity_loop.stop()
 
                 if not silent:
                     await self.previous_channel.send(
@@ -571,7 +566,6 @@ class MarcelMediaPlayer:
                     )
 
                 self.player_info = pinfo
-                self.reset_timeout()
 
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(
@@ -674,7 +668,6 @@ class MarcelMediaPlayer:
 
         if self.is_media_playing():
             self.voice_client.pause()
-            self.reset_timeout()
 
             if not silent:
                 await self.previous_channel.send(
@@ -704,7 +697,6 @@ class MarcelMediaPlayer:
 
         if self.is_media_paused():
             self.voice_client.resume()
-            self.reset_timeout()
 
             if not silent:
                 await self.previous_channel.send(

@@ -29,8 +29,7 @@ sample_config = {
         "level": "warning"
     },
     "voice_client": {
-        "timeout_idle": 1800,
-        "timeout_playing": 7200,
+        "idle_limit": 1800,
         "player_queue_limit": 20,
         "duration_limit": 1800
     },

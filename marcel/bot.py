@@ -404,8 +404,7 @@ class Marcel(discord.Client):
                 volume_limit=guild_settings.get("volume_limit", 1.0),
                 player_queue_limit=self.cfg.get("voice_client", dict()).get("player_queue_limit", 20),
                 duration_limit=self.cfg.get("voice_client", dict()).get("duration_limit", 1800),
-                timeout_idle=self.cfg.get("voice_client", dict()).get("timeout_idle", 1800),
-                timeout_playing=self.cfg.get("voice_client", dict()).get("timeout_playing", 7200)
+                idle_limit=self.cfg.get("voice_client", dict()).get("idle_limit", 0)
             )
 
         return self.media_players.get(guild_id)
