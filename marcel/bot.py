@@ -565,6 +565,10 @@ class Marcel(discord.Client):
         for func in self.get_event_handler_functions("on_guild_remove"):
             await func(guild)
 
+    async def on_guild_update(self, before: discord.Guild, after: discord.Guild) -> None:
+        for func in self.get_event_handler_functions("on_guild_update"):
+            await func(before, after)
+
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
         for func in self.get_event_handler_functions("on_voice_state_update"):
             await func(member, before, after)
