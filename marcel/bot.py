@@ -541,6 +541,10 @@ class Marcel(discord.Client):
         for func in self.get_event_handler_functions("on_reaction_clear"):
             await func(message, reactions)
 
+    async def on_reaction_clear_emoji(self, reaction: discord.Reaction) -> None:
+        for func in self.get_event_handler_functions("on_reaction_clear_emoji"):
+            await func(reaction)
+
     async def on_member_join(self, member: discord.Member) -> None:
         for func in self.get_event_handler_functions("on_member_join"):
             await func(member)
