@@ -60,6 +60,8 @@ Here's a configuration template (which you can find in the `templates` folder):
 -   `owners` is a list of user IDs that are bot owners, these users will have all privileges over the bot
 -   `logging` defines how the bot should log information
     -   `level` is the logging level, by default it is set to `warning`
+    -   `enabled` is optional, if set to `true` the bot will also log to a file (it defaults to `cfg_folder/marcel-the-bot.log`)
+    -   `file` is optional, if set the bot will log to this file instead
 -   `voice_client` defines the voice client's behavior
     -   `idle_limit` is the idle time (in seconds) before the voice client is automatically disconnected
     -   `player_queue_limit` is the maximum amount of medias that the player queue will accept
