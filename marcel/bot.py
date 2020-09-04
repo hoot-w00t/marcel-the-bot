@@ -605,13 +605,13 @@ class Marcel(discord.Client):
             await func(invite)
 
     # MarcelMediaPlayer event handlers
-    async def on_voice_join(self, channel: discord.VoiceChannel):
+    async def on_voice_join(self, channel: discord.VoiceChannel, player: MarcelMediaPlayer):
         for func in self.get_event_handler_functions("on_voice_join"):
-            await func(channel)
+            await func(channel, player)
 
-    async def on_voice_leave(self, channel: discord.VoiceChannel):
+    async def on_voice_leave(self, channel: discord.VoiceChannel, player: MarcelMediaPlayer):
         for func in self.get_event_handler_functions("on_voice_leave"):
-            await func(channel)
+            await func(channel, player)
 
     async def on_media_play(self, media: PlayerInfo, player: MarcelMediaPlayer):
         for func in self.get_event_handler_functions("on_media_play"):

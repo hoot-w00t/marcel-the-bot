@@ -345,7 +345,7 @@ class MarcelMediaPlayer:
                 self.last_active = time.time()
 
                 if self.on_voice_join is not None:
-                    self.loop.create_task(self.on_voice_join(voice_channel))
+                    self.loop.create_task(self.on_voice_join(voice_channel, self))
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -386,7 +386,7 @@ class MarcelMediaPlayer:
                     ))
 
                 if self.on_voice_join is not None:
-                    self.loop.create_task(self.on_voice_join(voice_channel))
+                    self.loop.create_task(self.on_voice_join(voice_channel, self))
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -450,7 +450,7 @@ class MarcelMediaPlayer:
                 await self.voice_client.disconnect()
 
                 if self.on_voice_leave is not None:
-                    self.loop.create_task(self.on_voice_leave(voice_channel))
+                    self.loop.create_task(self.on_voice_leave(voice_channel, self))
 
                 if not silent:
                     await self.previous_channel.send(

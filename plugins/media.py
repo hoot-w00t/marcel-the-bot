@@ -1,4 +1,4 @@
-from marcel import Marcel
+from marcel import Marcel, MarcelMediaPlayer
 from marcel.util import embed_message
 import discord
 
@@ -65,9 +65,8 @@ class MarcelPlugin:
         self.marcel = marcel
         self.marcel.register_event_handler(self, "on_voice_join", "deafen_on_join")
 
-    async def deafen_on_join(self, channel: discord.VoiceChannel):
-        mp = self.marcel.get_server_mediaplayer(channel.guild)
-        await mp.change_voice_state(self_deaf=True)
+    async def deafen_on_join(self, channel: discord.VoiceChannel, player: MarcelMediaPlayer):
+        await player.change_voice_state(self_deaf=True)
 
     async def join_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
