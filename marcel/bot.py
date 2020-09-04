@@ -63,7 +63,7 @@ class Marcel(discord.Client):
         }.get(log_level_cfg, None)
 
         if log_level == None:
-            raise Exception("Accepted ogging levels are debug, info, warning, error, critical (case-sensitive)")
+            raise Exception("Accepted logging levels are debug, info, warning, error, critical (case-sensitive)")
 
         log_formatter = logging.Formatter("[%(levelname)s] [%(asctime)s] %(message)s")
         logger = logging.getLogger()
