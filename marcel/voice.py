@@ -133,6 +133,9 @@ class MarcelMediaPlayer:
         self.connect_timeout = 10.0
         self.last_active = time.time()
 
+        self.on_voice_join = None
+        self.on_voice_leave = None
+
     @tasks.loop(seconds=30)
     async def inactivity_loop(self) -> None:
         if self.is_in_voice_channel():
@@ -326,9 +329,11 @@ class MarcelMediaPlayer:
 
             try:
                 await asyncio.wait_for(self._move_to(voice_channel), self.connect_timeout)
-                await self.change_voice_state(self_deaf=True)
-
                 self.last_active = time.time()
+
+                if self.on_voice_join is not None:
+                    self.loop.create_task(self.on_voice_join(voice_channel))
+
                 await self.previous_channel.send(
                     embed=embed_message(
                         "I moved over to",
@@ -356,7 +361,6 @@ class MarcelMediaPlayer:
                     timeout=self.connect_timeout,
                     reconnect=False
                 )
-                await self.change_voice_state(self_deaf=True)
 
                 self.last_active = time.time()
                 try:
@@ -367,6 +371,9 @@ class MarcelMediaPlayer:
                         self.guild.id,
                         e
                     ))
+
+                if self.on_voice_join is not None:
+                    self.loop.create_task(self.on_voice_join(voice_channel))
 
                 await self.previous_channel.send(
                     embed=embed_message(
@@ -426,8 +433,11 @@ class MarcelMediaPlayer:
                     self.voice_client.stop()
 
                 self.player_info.clear()
-                name = self.voice_client.channel.name
+                voice_channel = self.voice_client.channel
                 await self.voice_client.disconnect()
+
+                if self.on_voice_leave is not None:
+                    self.loop.create_task(self.on_voice_leave(voice_channel))
 
                 if not silent:
                     await self.previous_channel.send(
@@ -436,7 +446,7 @@ class MarcelMediaPlayer:
                                 " ({})".format(reason) if reason else ""
                             ),
                             discord.Color.red(),
-                            name
+                            voice_channel.name
                         )
                     )
 

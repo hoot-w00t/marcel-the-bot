@@ -405,6 +405,10 @@ class Marcel(discord.Client):
                 idle_limit=self.cfg.get("voice_client", dict()).get("idle_limit", 0)
             )
 
+            # Bind event handlers
+            self.media_players[guild_id].on_voice_join = self.on_voice_join
+            self.media_players[guild_id].on_voice_leave = self.on_voice_leave
+
         return self.media_players.get(guild_id)
 
     def is_member_owner(self, member: discord.Member) -> bool:
@@ -598,3 +602,12 @@ class Marcel(discord.Client):
     async def on_invite_delete(self, invite: discord.Invite) -> None:
         for func in self.get_event_handler_functions("on_invite_delete"):
             await func(invite)
+
+    # MarcelMediaPlayer event handlers
+    async def on_voice_join(self, channel: discord.VoiceChannel):
+        for func in self.get_event_handler_functions("on_voice_join"):
+            await func(channel)
+
+    async def on_voice_leave(self, channel: discord.VoiceChannel):
+        for func in self.get_event_handler_functions("on_voice_leave"):
+            await func(channel)
