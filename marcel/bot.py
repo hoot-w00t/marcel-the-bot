@@ -73,6 +73,16 @@ class Marcel(discord.Client):
         log_stdout.setFormatter(log_formatter)
         logger.addHandler(log_stdout)
 
+        if self.cfg.get("logging", dict()).get("enabled", False):
+            log_file_path = self.cfg.get("logging", dict()).get(
+                "file",
+                str(self.cfg_path.joinpath("marcel-the-bot.log"))
+            )
+            log_file = logging.FileHandler(filename=log_file_path)
+            log_file.setFormatter(log_formatter)
+            logger.addHandler(log_file)
+            logger.debug("Logging to {}".format(log_file_path))
+
         # Load configuration settings
         self.load_server_settings()
 
