@@ -1,4 +1,4 @@
-from marcel.voice import MarcelMediaPlayer
+from marcel.voice import MarcelMediaPlayer, PlayerInfo
 from marcel.util import embed_message
 from pathlib import Path
 from typing import Union
@@ -408,6 +408,7 @@ class Marcel(discord.Client):
             # Bind event handlers
             self.media_players[guild_id].on_voice_join = self.on_voice_join
             self.media_players[guild_id].on_voice_leave = self.on_voice_leave
+            self.media_players[guild_id].on_media_play = self.on_media_play
 
         return self.media_players.get(guild_id)
 
@@ -611,3 +612,7 @@ class Marcel(discord.Client):
     async def on_voice_leave(self, channel: discord.VoiceChannel):
         for func in self.get_event_handler_functions("on_voice_leave"):
             await func(channel)
+
+    async def on_media_play(self, media: PlayerInfo, player: MarcelMediaPlayer):
+        for func in self.get_event_handler_functions("on_media_play"):
+            await func(media, player)

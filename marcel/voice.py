@@ -135,6 +135,7 @@ class MarcelMediaPlayer:
 
         self.on_voice_join = None
         self.on_voice_leave = None
+        self.on_media_play = None
 
     @tasks.loop(seconds=30)
     async def inactivity_loop(self) -> None:
@@ -589,6 +590,8 @@ class MarcelMediaPlayer:
                     )
 
                 self.player_info = pinfo
+                if self.on_media_play is not None:
+                    self.loop.create_task(self.on_media_play(self.player_info, self))
 
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(
