@@ -77,6 +77,18 @@ class PlayerInfo:
 
         return False
 
+    def copy(self):
+        return PlayerInfo(
+            title=self.title,
+            author=self.author,
+            thumbnail=self.thumbnail,
+            duration=self.duration,
+            url=self.url,
+            playback_url=self.playback_url,
+            found=self.found,
+            from_ytdl=self.from_ytdl
+        )
+
     def get_embed(self, title: str, color: discord.Color, show_duration: bool = True) -> discord.Embed:
         """Create a discord.Embed to display PlayerInfo information"""
 
@@ -589,9 +601,9 @@ class MarcelMediaPlayer:
                         as_playerinfo=True
                     )
 
-                self.player_info = pinfo
+                self.player_info = pinfo.copy()
                 if self.on_media_play is not None:
-                    self.loop.create_task(self.on_media_play(self.player_info, self))
+                    self.loop.create_task(self.on_media_play(self.player_info.copy(), self))
 
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(
