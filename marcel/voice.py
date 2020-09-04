@@ -241,6 +241,7 @@ class MarcelMediaPlayer:
                 "simulate": True,
                 "skip_download": True,
                 "playlistend": self.player_queue_limit if playlistend <= 0 else playlistend,
+                "flat_playlist": True,
                 "restrictfilenames": True,
                 "nocheckcertificate": True,
                 "ignoreerrors": False,
@@ -248,7 +249,8 @@ class MarcelMediaPlayer:
                 "quiet": True,
                 "no_warnings": True,
                 "default_search": "auto",
-                "source_address": "0.0.0.0"
+                "source_address": "0.0.0.0",
+                "no_color": True
             }
 
             if not with_playlists:
