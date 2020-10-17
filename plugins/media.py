@@ -201,7 +201,7 @@ class MarcelPlugin:
             else:
                 await message.channel.send(
                     embed=embed_message(
-                        "No results for",
+                        pinfo.short_error,
                         discord.Color.dark_red(),
                         message=request
                     )

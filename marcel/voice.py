@@ -37,7 +37,8 @@ class PlayerInfo:
         url: str = None,
         playback_url: str = None,
         found: bool = False,
-        from_ytdl: bool = False) -> None:
+        from_ytdl: bool = False,
+        error: str = None) -> None:
         """Media player information"""
         self.title = title
         self.author = author
@@ -55,6 +56,13 @@ class PlayerInfo:
         self.url = url
         self.playback_url = playback_url
         self.found = found
+        self.error = error
+        if self.error is None:
+            self.short_error = None
+        elif len(self.error) >= 256:
+            self.short_error = "{}...".format(self.error[:253])
+        else:
+            self.short_error = error
 
         # This indicates the Media Player that the PlayerInfo was extracted from youtube-dl
         # The Media Player will fetch the regular URL using youtube-dl right before playing it
@@ -260,6 +268,8 @@ class MarcelMediaPlayer:
             if not with_playlists:
                 ytdl_opts["noplaylist"] = True
 
+            error = "No results for"
+
             with youtube_dl.YoutubeDL(params=ytdl_opts) as ytdl:
                 await self.loop.run_in_executor(None, ytdl.cache.remove)
 
@@ -281,12 +291,19 @@ class MarcelMediaPlayer:
                     ))
 
                     info = dict(entries=list())
+                    error = "Request took too long (timed out)"
+
+                except Exception as e:
+                    logging.error("ytdl_fetch: {}".format(e))
+
+                    info = dict(entries=list())
+                    error = str(e)[6:].strip()
 
             if as_playerinfo:
                 entries = info.get("entries", [info])
 
                 if len(entries) == 0:
-                    return PlayerInfo()
+                    return PlayerInfo(error=error)
                 elif with_playlists:
                     return [self.ytdl_entry_to_playerinfo(x) for x in entries]
                 else:
@@ -297,7 +314,7 @@ class MarcelMediaPlayer:
 
         except Exception as e:
             logging.error("ytdl_fetch: {}".format(e))
-            return PlayerInfo() if as_playerinfo else dict()
+            return PlayerInfo(error=str(e)[6:].strip()) if as_playerinfo else dict()
 
     async def send_nothing_playing(self) -> None:
         """Send a nothing is playing message to the previous channel"""
@@ -526,18 +543,18 @@ class MarcelMediaPlayer:
                 )
 
             if isinstance(pinfos, PlayerInfo):
-                pinfos = [pinfos] if pinfos.found else list()
-
-            if len(pinfos) == 0:
-                if not silent:
-                    await self.previous_channel.send(
-                        embed=embed_message(
-                            "No results for",
-                            discord.Color.dark_red(),
-                            message=request
+                if not pinfos.found:
+                    if not silent:
+                        await self.previous_channel.send(
+                            embed=embed_message(
+                                pinfos.short_error,
+                                discord.Color.dark_red(),
+                                message=request
+                            )
                         )
-                    )
-                return
+                    return
+
+                pinfos = [pinfos] if pinfos.found else list()
 
             if shuffle:
                 random.shuffle(pinfos)
@@ -610,6 +627,9 @@ class MarcelMediaPlayer:
                         pinfo.url,
                         as_playerinfo=True
                     )
+
+                    if not pinfo.found:
+                        raise Exception(pinfo.error)
 
             self.player_info = pinfo.copy()
             self.last_played = self.player_info.copy()
@@ -805,18 +825,18 @@ class MarcelMediaPlayer:
                     )
 
                 if isinstance(pinfos, PlayerInfo):
-                    pinfos = [pinfos] if pinfos.found else list()
+                    if not pinfos.found:
+                        if not silent:
+                            await self.previous_channel.send(
+                                embed=embed_message(
+                                    pinfos.short_error,
+                                    discord.Color.dark_red(),
+                                    request
+                                )
+                            )
+                        return
 
-        if len(pinfos) == 0:
-            if not silent:
-                await self.previous_channel.send(
-                    embed=embed_message(
-                        "No results for",
-                        discord.Color.dark_red(),
-                        request
-                    )
-                )
-            return
+                    pinfos = [pinfos] if pinfos.found else list()
 
         if shuffle:
             random.shuffle(pinfos)
