@@ -593,6 +593,7 @@ class MarcelMediaPlayer:
             return
 
         self.player_busy = True # lock player
+        self.last_active = time.time()
         try:
             if self.is_media_playing() or self.is_media_paused():
                 # Always disable autoplay before stopping to prevent the callback to play something else
