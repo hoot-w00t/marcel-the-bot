@@ -523,6 +523,7 @@ class MarcelMediaPlayer:
         fetch_before_play = True
         pinfos = None
         if isinstance(request, PlayerInfo):
+            fetch_before_play = request.from_ytdl
             pinfo = request
 
         elif len(request) == 0:
