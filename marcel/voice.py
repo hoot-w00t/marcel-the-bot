@@ -139,6 +139,7 @@ class MarcelMediaPlayer:
         self.previous_channel = None
         self.player_busy = False
         self.player_info = PlayerInfo()
+        self.last_played = None
         self.player_queue = list()
 
         self.loop = asyncio.get_event_loop()
@@ -452,6 +453,7 @@ class MarcelMediaPlayer:
                     self.voice_client.stop()
 
                 self.player_info.clear()
+                self.last_played = None
                 voice_channel = self.voice_client.channel
                 await self.voice_client.disconnect()
 
@@ -501,6 +503,7 @@ class MarcelMediaPlayer:
 
         self.set_previous_channel(channel)
 
+        fetch_before_play = True
         pinfos = None
         if isinstance(request, PlayerInfo):
             pinfo = request
@@ -554,7 +557,7 @@ class MarcelMediaPlayer:
                 # We don't disable the refresh if there are multiple results
                 # because grabbing multiple results can take some time and the
                 # playback URL can expire
-                pinfo.from_ytdl = False
+                fetch_before_play = False
 
         if not self.is_in_voice_channel() and member:
             await self.join_member_voice_channel(member, self.previous_channel)
@@ -600,7 +603,7 @@ class MarcelMediaPlayer:
                 self.autoplay = False
                 self.voice_client.stop()
 
-            if pinfo.from_ytdl:
+            if fetch_before_play:
                 async with self.previous_channel.typing():
                     # Always refresh the playback URL when fetched from youtube-dl to prevent expired URLs
                     pinfo = await self.ytdl_fetch(
@@ -609,6 +612,8 @@ class MarcelMediaPlayer:
                     )
 
             self.player_info = pinfo.copy()
+            self.last_played = self.player_info.copy()
+
             if self.on_media_play is not None:
                 self.loop.create_task(self.on_media_play(self.player_info.copy(), self))
 

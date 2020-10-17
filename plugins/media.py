@@ -31,6 +31,9 @@ class MarcelPlugin:
                    Playlists are also supported.
                    If you want to interrupt a currently playing media, use `{prefix}fplay`.
 
+    `{prefix}replay` replays or queues the last song played.
+                     If you want to interrupt a currently playing media, use `{prefix}freplay`
+
     `{prefix}stop`, `{prefix}pause` and `{prefix}resume` stop, pause or resume the playing media.
     `{prefix}skip` skips to the next song in the player queue (if any).
     `{prefix}add` [request] search for your request and add it to the player queue.
@@ -50,6 +53,8 @@ class MarcelPlugin:
         ("leave", "leave_cmd", "clean_command"),
         ("play", "play_cmd", "clean_command"),
         ("fplay", "force_play_cmd", "clean_command"),
+        ("replay", "replay_cmd", "clean_command"),
+        ("freplay", "force_replay_cmd", "clean_command"),
         ("skip", "skip_cmd", "clean_command"),
         ("stop", "stop_cmd", "clean_command"),
         ("pause", "pause_cmd", "clean_command"),
@@ -107,6 +112,32 @@ class MarcelPlugin:
 
     async def force_play_cmd(self, message: discord.Message, args: list, **kwargs):
         await self.play_cmd(message, args, forceplay=True, **kwargs)
+
+    async def replay_cmd(self, message: discord.Message, args: list, **kwargs):
+        mp = kwargs.get("mediaplayer")
+
+        if mp.last_played is not None:
+            if not kwargs.get("forceplay") and mp.is_media_playing():
+                await mp.player_queue_add(mp.last_played.copy(), channel=message.channel)
+
+            else:
+                await mp.play(
+                    mp.last_played.copy(),
+                    channel=message.channel,
+                    member=message.author,
+                    autoplay=True
+                )
+        else:
+            await message.channel.send(
+                embed=embed_message(
+                    "Nothing was played before",
+                    discord.Color.dark_red()
+                ),
+                delete_after=kwargs.get("settings").get("delete_after")
+            )
+
+    async def force_replay_cmd(self, message: discord.Message, args: list, **kwargs):
+        await self.replay_cmd(message, args, forceplay=True, **kwargs)
 
     async def shuffle_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
