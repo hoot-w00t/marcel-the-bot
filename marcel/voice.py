@@ -144,6 +144,7 @@ class MarcelMediaPlayer:
         self.loop = asyncio.get_event_loop()
         self.connect_timeout = 10.0
         self.last_active = time.time()
+        self.last_not_alone = time.time()
 
         self.on_voice_join = None
         self.on_voice_leave = None
@@ -163,9 +164,11 @@ class MarcelMediaPlayer:
                 if member == self.guild.me:
                     continue
                 if not member.voice.afk:
+                    self.last_not_alone = time.time()
                     return
 
-            await self.leave_voice_channel(reason="bot is alone")
+            if time.time() - self.last_not_alone >= 60:
+                await self.leave_voice_channel(reason="bot is alone")
 
         else:
             self.inactivity_loop.stop()
@@ -378,6 +381,7 @@ class MarcelMediaPlayer:
                 )
 
                 self.last_active = time.time()
+                self.last_not_alone = time.time()
                 try:
                     self.inactivity_loop.start()
 
