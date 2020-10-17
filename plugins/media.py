@@ -26,7 +26,11 @@ class MarcelPlugin:
     plugin_author = "https://github.com/hoot-w00t"
     plugin_help = """`{prefix}join` joins the voice channel that you are in
     `{prefix}leave` leaves the voice channel that the bot is in.
-    `{prefix}play` [request] plays the requested link (supports these: https://rg3.github.io/youtube-dl/supportedsites.html), or searches for the request on YouTube. Playlists are supported.
+    `{prefix}play` [request] plays or queues the requested link, or searches for the request on YouTube.
+                   List of supported links: https://ytdl-org.github.io/youtube-dl/supportedsites.html
+                   Playlists are also supported.
+                   If you want to interrupt a currently playing media, use `{prefix}fplay`.
+
     `{prefix}stop`, `{prefix}pause` and `{prefix}resume` stop, pause or resume the playing media.
     `{prefix}skip` skips to the next song in the player queue (if any).
     `{prefix}add` [request] search for your request and add it to the player queue.
@@ -45,6 +49,7 @@ class MarcelPlugin:
         ("join", "join_cmd", "clean_command"),
         ("leave", "leave_cmd", "clean_command"),
         ("play", "play_cmd", "clean_command"),
+        ("fplay", "force_play_cmd", "clean_command"),
         ("skip", "skip_cmd", "clean_command"),
         ("stop", "stop_cmd", "clean_command"),
         ("pause", "pause_cmd", "clean_command"),
@@ -83,18 +88,25 @@ class MarcelPlugin:
         request = " ".join(args).strip()
 
         if len(request) > 0:
-            await mp.play(
-                request,
-                channel=message.channel,
-                member=message.author,
-                autoplay=True
-            )
+            if not kwargs.get("forceplay") and mp.is_media_playing():
+                await mp.player_queue_add(request, channel=message.channel)
+
+            else:
+                await mp.play(
+                    request,
+                    channel=message.channel,
+                    member=message.author,
+                    autoplay=True
+                )
 
         elif mp.is_media_paused():
             await mp.resume(channel=message.channel)
 
         else:
             await mp.skip(message.channel, autoplay=True)
+
+    async def force_play_cmd(self, message: discord.Message, args: list, **kwargs):
+        await self.play_cmd(message, args, forceplay=True, **kwargs)
 
     async def shuffle_cmd(self, message: discord.Message, args: list, **kwargs):
         mp = kwargs.get("mediaplayer")
