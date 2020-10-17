@@ -65,22 +65,24 @@ class MarcelPlugin:
 
         if len(text) > 0:
             mp = self.marcel.get_server_mediaplayer(message.guild)
-            pinfo = PlayerInfo(
-                title="Text To Speech",
-                author=self.plugin_name,
-                playback_url=await self.marcel.loop.run_in_executor(
-                    None,
-                    lambda: self.generate_tts(
-                        "{}: {}".format(
-                            message.author.display_name,
-                            text
-                        ),
-                        lang,
-                        str(message.guild.id)
-                    )
-                ),
-                found=True
-            )
+
+            async with message.channel.typing():
+                pinfo = PlayerInfo(
+                    title="Text To Speech",
+                    author=self.plugin_name,
+                    playback_url=await self.marcel.loop.run_in_executor(
+                        None,
+                        lambda: self.generate_tts(
+                            "{}: {}".format(
+                                message.author.display_name,
+                                text
+                            ),
+                            lang,
+                            str(message.guild.id)
+                        )
+                    ),
+                    found=True
+                )
 
             await mp.play(
                 pinfo,
