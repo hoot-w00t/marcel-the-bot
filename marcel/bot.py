@@ -87,7 +87,7 @@ class Marcel(discord.Client):
         self.load_server_settings()
 
         # Initialize discord.Client
-        super(Marcel, self).__init__()
+        super(Marcel, self).__init__(intents=discord.Intents.all())
 
         # Expand plugins_path (bot plugins folder)
         if isinstance(plugins_path, Path):
