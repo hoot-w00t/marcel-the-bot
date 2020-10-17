@@ -590,36 +590,36 @@ class MarcelMediaPlayer:
 
         self.player_busy = True # lock player
         try:
-            async with self.previous_channel.typing():
-                if self.is_media_playing() or self.is_media_paused():
-                    # Always disable autoplay before stopping to prevent the callback to play something else
-                    self.autoplay = False
-                    self.voice_client.stop()
+            if self.is_media_playing() or self.is_media_paused():
+                # Always disable autoplay before stopping to prevent the callback to play something else
+                self.autoplay = False
+                self.voice_client.stop()
 
-                if pinfo.from_ytdl:
+            if pinfo.from_ytdl:
+                async with self.previous_channel.typing():
                     # Always refresh the playback URL when fetched from youtube-dl to prevent expired URLs
                     pinfo = await self.ytdl_fetch(
                         pinfo.url,
                         as_playerinfo=True
                     )
 
-                self.player_info = pinfo.copy()
-                if self.on_media_play is not None:
-                    self.loop.create_task(self.on_media_play(self.player_info.copy(), self))
+            self.player_info = pinfo.copy()
+            if self.on_media_play is not None:
+                self.loop.create_task(self.on_media_play(self.player_info.copy(), self))
 
-                player = discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(
-                        pinfo.playback_url,
-                        options="-vn",
-                        before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if pinfo.is_http() else ""
-                    ),
-                    volume=self.player_volume
-                )
+            player = discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(
+                    pinfo.playback_url,
+                    options="-vn",
+                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if pinfo.is_http() else ""
+                ),
+                volume=self.player_volume
+            )
 
-                self.voice_client.play(
-                    player,
-                    after=self.after_callback
-                )
+            self.voice_client.play(
+                player,
+                after=self.after_callback
+            )
 
             if not silent:
                 await self.previous_channel.send(
