@@ -5,7 +5,7 @@ from marcel.util import embed_message
 import asyncio
 import discord
 import time
-import youtube_dl
+import youtube_dlc
 import logging
 import random
 
@@ -64,8 +64,8 @@ class PlayerInfo:
         else:
             self.short_error = error
 
-        # This indicates the Media Player that the PlayerInfo was extracted from youtube-dl
-        # The Media Player will fetch the regular URL using youtube-dl right before playing it
+        # This indicates the Media Player that the PlayerInfo was extracted from youtube-dlc
+        # The Media Player will fetch the regular URL using youtube-dlc right before playing it
         # to fix an issue where the extracted playback URLs expire after some time
         self.from_ytdl = from_ytdl
 
@@ -223,7 +223,7 @@ class MarcelMediaPlayer:
         return self.voice_client.is_paused() if self.is_in_voice_channel() else False
 
     def ytdl_entry_to_playerinfo(self, entry: dict) -> PlayerInfo:
-        """Parse Youtube-DL entry into PlayerInfo"""
+        """Parse Youtube-DLC entry into PlayerInfo"""
 
         return PlayerInfo(
             title=entry.get("title"),
@@ -242,7 +242,7 @@ class MarcelMediaPlayer:
         as_playerinfo: bool = False,
         with_playlists: bool = False,
         playlistend: int = 0) -> Union[PlayerInfo, list, dict]:
-        """Fetch information about a given request using youtube-dl
+        """Fetch information about a given request using youtube-dlc
         request: can either be a link or a text search
         Returns either a list or a PlayerInfo if as_playerinfo is True"""
 
@@ -270,7 +270,7 @@ class MarcelMediaPlayer:
 
             error = "No results for"
 
-            with youtube_dl.YoutubeDL(params=ytdl_opts) as ytdl:
+            with youtube_dlc.YoutubeDL(params=ytdl_opts) as ytdl:
                 await self.loop.run_in_executor(None, ytdl.cache.remove)
 
                 try:
@@ -512,7 +512,7 @@ class MarcelMediaPlayer:
         respect_duration_limit: bool = True,
         shuffle: bool = False) -> None:
         """Play a media
-        If request is not a PlayerInfo, it youtube-dl to fetch information
+        If request is not a PlayerInfo, it youtube-dlc to fetch information
         silent: If True no messages will be sent to the previous text channel
         autoplay: whether autoplay should be enabled
         respect_duration_limit: If False, ignore the media duration limit
@@ -623,7 +623,7 @@ class MarcelMediaPlayer:
 
             if fetch_before_play:
                 async with self.previous_channel.typing():
-                    # Always refresh the playback URL when fetched from youtube-dl to prevent expired URLs
+                    # Always refresh the playback URL when fetched from youtube-dlc to prevent expired URLs
                     pinfo = await self.ytdl_fetch(
                         pinfo.url,
                         as_playerinfo=True

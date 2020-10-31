@@ -9,7 +9,7 @@ It comes with a good set a plugins for many uses, but you can add/remove any plu
 You can also make your own plugin, see [Make your own plugin](#make-your-own-plugin)
 
 ## Installation
-This program requires [Python 3.6+](https://docs.python.org/3.3/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dl](https://github.com/ytdl-org/youtube-dl/) for the media player.
+This program requires [Python 3.6+](https://docs.python.org/3.3/tutorial/index.html), [discord.py](https://github.com/Rapptz/discord.py/) with voice and [youtube_dlc](https://github.com/blackjack4494/yt-dlc) for the media player.
 
 Follow [these instructions](https://github.com/Rapptz/discord.py/#installing) to install [discord.py](https://github.com/Rapptz/discord.py/).
 
@@ -31,7 +31,7 @@ sudo ./install_linux_daemon.sh
 ```
 You can also run the bot manually with `python3 -m marcel -c config_folder -p plugins_folder`.
 
-**Note:** [youtube_dl](https://github.com/ytdl-org/youtube-dl/) gets updated often, you will regularly need to update it in order for the related voice functionnalities to keep working: `python3 -m pip install --user --upgrade youtube-dl` or `su -c "python3 -m pip install --user --upgrade youtube-dl" marcel` if you installed the Linux service.
+**Note:** [youtube_dlc](https://github.com/blackjack4494/yt-dlc) gets updated often, you will regularly need to update it in order for the related voice functionnalities to keep working: `python3 -m pip install --user --upgrade youtube-dlc` or `su -c "python3 -m pip install --user --upgrade youtube-dlc" marcel` if you installed the Linux service.
 
 ## Configuration
 Here's a configuration template (which you can find in the `templates` folder):
