@@ -52,6 +52,7 @@ class MarcelPlugin:
         ("join", "join_cmd", "clean_command"),
         ("leave", "leave_cmd", "clean_command"),
         ("play", "play_cmd", "clean_command"),
+        ("p", "play_cmd", "clean_command"),
         ("fplay", "force_play_cmd", "clean_command"),
         ("replay", "replay_cmd", "clean_command"),
         ("freplay", "force_replay_cmd", "clean_command"),
@@ -68,6 +69,7 @@ class MarcelPlugin:
         ("volume", "volume_cmd", "clean_command"),
         ("volume-limit", "volume_limit_cmd", "clean_command"),
         ("vol", "volume_cmd", "clean_command"),
+        ("v", "volume_cmd", "clean_command"),
         ("vol-limit", "volume_limit_cmd", "clean_command")
     ]
 
