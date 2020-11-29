@@ -1,5 +1,6 @@
 from marcel import Marcel, __version__
 from marcel.util import embed_message
+import youtube_dl
 import discord
 import logging
 
@@ -54,13 +55,11 @@ class MarcelPlugin:
         )
 
     async def version_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.channel.send(
-            embed=embed_message(
-                "Marcel the Bot",
-                discord.Color.blue(),
-                "version {}".format(__version__)
-            )
-        )
+        embed = embed_message("Marcel", discord.Color.blue())
+        embed.add_field(name="marcel-the-bot", value=__version__, inline=False)
+        embed.add_field(name="discord.py", value=discord.__version__, inline=False)
+        embed.add_field(name="youtube-dlc", value=youtube_dl.version.__version__, inline=False)
+        await message.channel.send(embed=embed)
 
     async def invite_bot_cmd(self, message: discord.Message, args: list, **kwargs):
         appinfo = await self.marcel.application_info()
