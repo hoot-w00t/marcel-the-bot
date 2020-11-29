@@ -1,5 +1,5 @@
 from marcel import Marcel, MarcelMediaPlayer
-from marcel.util import embed_message
+from marcel.util import embed_message, escape_text
 import discord
 
 class MarcelPlugin:
@@ -188,18 +188,26 @@ class MarcelPlugin:
         request = " ".join(args).strip()
 
         if len(request) > 0:
+            msg = await message.channel.send(
+                embed=embed_message(
+                    "Searching ...",
+                    discord.Color.orange(),
+                    message=escape_text(request)
+                )
+            )
+
             async with message.channel.typing():
                 pinfo = await mp.ytdl_fetch(request, as_playerinfo=True)
 
             if pinfo.found:
-                await message.channel.send(
+                await msg.edit(
                     embed=pinfo.get_embed(
                         "Search result",
                         discord.Color.green()
                     )
                 )
             else:
-                await message.channel.send(
+                await msg.edit(
                     embed=embed_message(
                         pinfo.short_error,
                         discord.Color.dark_red(),
