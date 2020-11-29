@@ -25,3 +25,8 @@ def embed_message(title: str, color: discord.Color, message: str = "") -> discor
     embed.set_author(name=title)
 
     return embed
+
+def escape_text(text: str) -> str:
+    """Escape mentions and markdown in text"""
+
+    return discord.utils.escape_mentions(discord.utils.escape_markdown(text))
