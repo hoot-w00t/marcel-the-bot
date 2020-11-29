@@ -1,2 +1,2 @@
 discord.py[voice]==1.5.0
-youtube_dlc
+youtube_dl
