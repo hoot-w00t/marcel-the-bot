@@ -58,7 +58,7 @@ class MarcelPlugin:
         embed = embed_message("Marcel", discord.Color.blue())
         embed.add_field(name="marcel-the-bot", value=__version__, inline=False)
         embed.add_field(name="discord.py", value=discord.__version__, inline=False)
-        embed.add_field(name="youtube-dlc", value=youtube_dl.version.__version__, inline=False)
+        embed.add_field(name="youtube-dl", value=youtube_dl.version.__version__, inline=False)
         await message.channel.send(embed=embed)
 
     async def invite_bot_cmd(self, message: discord.Message, args: list, **kwargs):
