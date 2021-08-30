@@ -24,7 +24,7 @@ setuptools.setup(
         ]
     },
     install_requires=[
-        "discord.py[voice]==1.5.1",
+        "discord.py[voice]==1.7.3",
         "youtube-dl"
     ],
     python_requires='>=3.6',
