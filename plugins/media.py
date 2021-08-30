@@ -60,16 +60,16 @@ class MarcelPlugin:
         ("stop", "stop_cmd", "clean_command"),
         ("pause", "pause_cmd", "clean_command"),
         ("resume", "resume_cmd", "clean_command"),
-        ("search", "search_cmd", "clean_command"),
+        ("search", "search_cmd"),
         ("add", "add_cmd", "clean_command"),
         ("shuffle", "shuffle_cmd", "clean_command"),
         ("clear", "clear_cmd", "clean_command"),
         ("queue", "queue_cmd", "clean_command"),
-        ("playing", "playing_cmd", "clean_command"),
-        ("volume", "volume_cmd", "clean_command"),
+        ("playing", "playing_cmd"),
+        ("volume", "volume_cmd"),
         ("volume-limit", "volume_limit_cmd", "clean_command"),
-        ("vol", "volume_cmd", "clean_command"),
-        ("v", "volume_cmd", "clean_command"),
+        ("vol", "volume_cmd"),
+        ("v", "volume_cmd"),
         ("vol-limit", "volume_limit_cmd", "clean_command")
     ]
 
@@ -190,7 +190,7 @@ class MarcelPlugin:
         request = " ".join(args).strip()
 
         if len(request) > 0:
-            msg = await message.channel.send(
+            msg = await message.reply(
                 embed=embed_message(
                     "Searching ...",
                     discord.Color.orange(),
@@ -198,8 +198,7 @@ class MarcelPlugin:
                 )
             )
 
-            async with message.channel.typing():
-                pinfo = await mp.ytdl_fetch(request, as_playerinfo=True)
+            pinfo = await mp.ytdl_fetch(request, as_playerinfo=True)
 
             if pinfo.found:
                 await msg.edit(
@@ -218,12 +217,11 @@ class MarcelPlugin:
                 )
 
         else:
-            await message.channel.send(
+            await message.reply(
                 embed=embed_message(
                     "You can't search nothingness",
                     discord.Color.dark_red()
-                ),
-                delete_after=kwargs.get("settings").get("delete_after")
+                )
             )
 
     async def add_cmd(self, message: discord.Message, args: list, **kwargs):
@@ -286,7 +284,7 @@ class MarcelPlugin:
         mp = kwargs.get("mediaplayer")
 
         if mp.player_info.found:
-            await message.channel.send(
+            await message.reply(
                 embed=mp.player_info.get_embed(
                     "Currently playing",
                     discord.Color.blue()
@@ -294,12 +292,11 @@ class MarcelPlugin:
             )
 
         else:
-            await message.channel.send(
+            await message.reply(
                 embed=embed_message(
                     "Nothing is playing",
                     discord.Color.blue()
-                ),
-                delete_after=kwargs.get("settings").get("delete_after")
+                )
             )
 
     async def volume_cmd(self, message: discord.Message, args: list, **kwargs):
@@ -314,41 +311,37 @@ class MarcelPlugin:
                 if mp.player_volume_limit >= new_volume >= 0:
                     mp.set_volume(new_volume)
                     settings["volume"] = mp.player_volume
-                    await message.channel.send(
+                    await message.reply(
                         embed=embed_message(
                             "Volume is now set to",
                             discord.Color.blue(),
                             "{}%".format(mp.player_volume * 100)
-                        ),
-                        delete_after=settings.get("delete_after")
+                        )
                     )
 
                 else:
-                    await message.channel.send(
+                    await message.reply(
                         embed=embed_message(
                             "Volume must be >= 0% and <= {}%".format(mp.player_volume_limit * 100),
                             discord.Color.red()
-                        ),
-                        delete_after=settings.get("delete_after")
+                        )
                     )
 
             except:
-                await message.channel.send(
+                await message.reply(
                     embed=embed_message(
                         "Invalid volume",
                         discord.Color.red()
-                    ),
-                    delete_after=settings.get("delete_after")
+                    )
                 )
 
         else:
-            await message.channel.send(
+            await message.reply(
                 embed=embed_message(
                     "Current volume",
                     discord.Color.blue(),
                     "{}%".format(mp.player_volume * 100)
-                ),
-                delete_after=settings.get("delete_after")
+                )
             )
 
     async def volume_limit_cmd(self, message: discord.Message, args: list, **kwargs):
