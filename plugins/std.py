@@ -32,17 +32,17 @@ class MarcelPlugin:
     `{prefix}invite-bot` generates an invitation to add me on your server"""
 
     bot_commands = [
-        ("ping", "ping_cmd", "clean_command"),
+        ("ping", "ping_cmd"),
         ("version", "version_cmd"),
-        ("invite-bot", "invite_bot_cmd", "clean_command"),
-        ("help", "help_cmd", "clean_command")
+        ("invite-bot", "invite_bot_cmd"),
+        ("help", "help_cmd")
     ]
 
     def __init__(self, marcel: Marcel):
         self.marcel = marcel
 
     async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.channel.send(
+        await message.reply(
             message.author.mention,
             embed=embed_message(
                 "Pong!",
@@ -50,8 +50,7 @@ class MarcelPlugin:
                 message="in {}ms".format(
                     int(self.marcel.latency * 1000)
                 )
-            ),
-            delete_after=kwargs.get("settings").get("delete_after")
+            )
         )
 
     async def version_cmd(self, message: discord.Message, args: list, **kwargs):
@@ -59,7 +58,7 @@ class MarcelPlugin:
         embed.add_field(name="marcel-the-bot", value=__version__, inline=False)
         embed.add_field(name="discord.py", value=discord.__version__, inline=False)
         embed.add_field(name="youtube-dl", value=youtube_dl.version.__version__, inline=False)
-        await message.channel.send(embed=embed)
+        await message.reply(embed=embed)
 
     async def invite_bot_cmd(self, message: discord.Message, args: list, **kwargs):
         appinfo = await self.marcel.application_info()
@@ -77,7 +76,7 @@ class MarcelPlugin:
         )
         embed.set_thumbnail(url=str(self.marcel.user.avatar_url))
 
-        await message.channel.send(
+        await message.reply(
             embed=embed,
             delete_after=kwargs.get("settings").get("delete_after")
         )
@@ -164,11 +163,11 @@ class MarcelPlugin:
         final_msg = ""
         for line in help_lines:
             if len(final_msg) + len(line) + 1 > 2000:
-                await message.channel.send(final_msg)
+                await message.reply(final_msg)
                 final_msg = ""
 
             final_msg += line
             final_msg += "\n"
 
         if len(final_msg) > 0:
-            await message.channel.send(final_msg)
+            await message.reply(final_msg)
