@@ -1,4 +1,4 @@
-from marcel import Marcel, __version__
+from marcel import Marcel, MarcelMediaPlayer, __version__
 from marcel.util import embed_message
 import youtube_dl
 import discord
@@ -42,16 +42,29 @@ class MarcelPlugin:
         self.marcel = marcel
 
     async def ping_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.reply(
-            message.author.mention,
-            embed=embed_message(
-                "Pong!",
-                discord.Color.orange(),
-                message="in {}ms".format(
-                    int(self.marcel.latency * 1000)
+        mp = kwargs.get("mediaplayer")
+
+        if mp.is_in_voice_channel() and mp.voice_client.latency != float("inf"):
+            await message.reply(
+                embed=embed_message(
+                    "Pong!",
+                    discord.Color.orange(),
+                    message="Websocket: {}ms, voice: {}ms".format(
+                        int(self.marcel.latency * 1000),
+                        int(mp.voice_client.latency * 1000),
+                    )
                 )
             )
-        )
+        else:
+            await message.reply(
+                embed=embed_message(
+                    "Pong!",
+                    discord.Color.orange(),
+                    message="Websocket: {}ms, voice: n/a".format(
+                        int(self.marcel.latency * 1000)
+                    )
+                )
+            )
 
     async def version_cmd(self, message: discord.Message, args: list, **kwargs):
         embed = embed_message("Marcel", discord.Color.blue())
