@@ -62,7 +62,7 @@ class MarcelPlugin:
 
     async def coin_cmd(self, message: discord.Message, args: list, **kwargs):
         if random.randint(1, 10) > 5:
-            await message.channel.send(
+            await message.reply(
                 embed=embed_message(
                     "It's heads!",
                     discord.Color.blue()
@@ -70,7 +70,7 @@ class MarcelPlugin:
             )
 
         else:
-            await message.channel.send(
+            await message.reply(
                 embed=embed_message(
                     "It's tails!",
                     discord.Color.blue()
@@ -81,7 +81,7 @@ class MarcelPlugin:
         return random.randint(1, 6)
 
     async def dice_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.channel.send(
+        await message.reply(
             embed=embed_message(
                 "You rolled {}!".format(self.roll_dice()),
                 discord.Color.blue()
@@ -89,7 +89,7 @@ class MarcelPlugin:
         )
 
     async def dices_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.channel.send(
+        await message.reply(
                 embed=embed_message(
                     "You rolled {} and {}!".format(
                         self.roll_dice(),
@@ -99,7 +99,7 @@ class MarcelPlugin:
                 )
             )
 
-    async def play_rps(self, play: int, channel: discord.TextChannel):
+    async def play_rps(self, play: int, msg: discord.Message):
         # play : 0 rock, 1 paper, 2 scissors
 
         r = random.randint(0, 2)
@@ -121,7 +121,7 @@ class MarcelPlugin:
         else:
             result = "That's a strange turn of events."
 
-        await channel.send(
+        await msg.reply(
             embed=embed_message(
                 "{} ! {}".format(
                     self.rps[r],
@@ -132,18 +132,17 @@ class MarcelPlugin:
         )
 
     async def rock_cmd(self, message: discord.Message, args: list, **kwargs):
-        await self.play_rps(0, message.channel)
+        await self.play_rps(0, message)
 
     async def paper_cmd(self, message: discord.Message, args: list, **kwargs):
-        await self.play_rps(1, message.channel)
+        await self.play_rps(1, message)
 
     async def scissors_cmd(self, message: discord.Message, args: list, **kwargs):
-        await self.play_rps(2, message.channel)
+        await self.play_rps(2, message)
 
     async def bang_cmd(self, message: discord.Message, args: list, **kwargs):
         if random.randint(1, 6) == 1:
-            await message.channel.send(
-                message.author.mention,
+            await message.reply(
                 embed=embed_message(
                     "Bang! You were shot!",
                     discord.Color.gold()
@@ -154,7 +153,7 @@ class MarcelPlugin:
             await message.add_reaction('\U0001F91E')
 
     async def thegame_cmd(self, message: discord.Message, args: list, **kwargs):
-        await message.channel.send(
+        await message.reply(
             embed=embed_message(
                 "You lost it! Oh no, and so have I.",
                 discord.Color.purple()
